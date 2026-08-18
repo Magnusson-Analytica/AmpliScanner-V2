@@ -1,0 +1,424 @@
+import { useState } from 'react';
+import {
+  DiscoveryRunResult, TrackingMethod,
+  buildUniqueEventsSummary, downloadResultAsCsv, downloadResultAsJson,
+} from '../api';
+
+interface ResultsViewProps {
+  result: DiscoveryRunResult;
+  onRerun?: (targetUrl: string) => void;
+}
+
+const METHOD_ORDER: TrackingMethod[] = ['DATALAYER_GTM', 'AUTOCAPTURE', 'CUSTOM_SDK'];
+
+const METHOD_LABELS: Record<TrackingMethod, string> = {
+  DATALAYER_GTM: 'DataLayer / GTM',
+  AUTOCAPTURE: 'Autocapture',
+  CUSTOM_SDK: 'SDK direct',
+};
+
+// CSS class suffixes, not raw colors - keeps the mockup's Autocapture=orange /
+// DataLayer-GTM=black / SDK-direct=grey mapping in one place.
+const METHOD_COLOR_CLASS: Record<TrackingMethod, string> = {
+  DATALAYER_GTM: 'method-color-gtm',
+  AUTOCAPTURE: 'method-color-autocapture',
+  CUSTOM_SDK: 'method-color-sdk',
+};
+
+type EventFilter = 'ALL' | TrackingMethod | 'NEW';
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function formatFieldValue(key: string, value: unknown): string {
+  if (value === null || value === undefined || value === '') {
+    return '—';
+  }
+  if (key === 'time' && typeof value === 'number') {
+    return `${new Date(value).toLocaleString()} (${value})`;
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
+
+function KeyValueTable({ fields }: { fields: [string, unknown][] }) {
+  if (fields.length === 0) return null;
+  return (
+    <table className="event-details-table">
+      <tbody>
+        {fields.map(([key, value]) => (
+          <tr key={key}>
+            <th>{key}</th>
+            <td>{formatFieldValue(key, value)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+// Renders whatever fields the event's own payload actually carries as a table, rather than a
+// hardcoded per-event-type layout - a click autocapture event surfaces its element/selector
+// properties, a page-view event surfaces its URL/path properties, etc., because that's simply
+// what each event's own event_properties (or equivalent nested object) contains.
+function EventDetails({ rawPayload }: { rawPayload?: string }) {
+  const [showRaw, setShowRaw] = useState(false);
+
+  let parsed: Record<string, unknown> | null = null;
+  if (rawPayload) {
+    try {
+      const candidate = JSON.parse(rawPayload);
+      if (isPlainObject(candidate)) {
+        parsed = candidate;
+      }
+    } catch {
+      parsed = null;
+    }
+  }
+
+  if (!parsed) {
+    return <pre>{rawPayload}</pre>;
+  }
+
+  const topLevelFields: [string, unknown][] = [];
+  const nestedSections: [string, Record<string, unknown>][] = [];
+  for (const [key, value] of Object.entries(parsed)) {
+    if (isPlainObject(value)) {
+      nestedSections.push([key, value]);
+    } else {
+      topLevelFields.push([key, value]);
+    }
+  }
+
+  return (
+    <div className="event-details">
+      <KeyValueTable fields={topLevelFields} />
+      {nestedSections.map(([sectionKey, sectionValue]) => (
+        <div className="event-details-section" key={sectionKey}>
+          <h5>{sectionKey}</h5>
+          <KeyValueTable fields={Object.entries(sectionValue)} />
+        </div>
+      ))}
+      <button type="button" className="raw-json-toggle" onClick={() => setShowRaw(show => !show)}>
+        {showRaw ? 'Hide raw JSON' : 'View raw JSON'}
+      </button>
+      {showRaw && <pre>{rawPayload}</pre>}
+    </div>
+  );
+}
+
+interface MethodTotals {
+  count: number;
+  names: Set<string>;
+}
+
+function emptyMethodTotals(): Record<TrackingMethod, MethodTotals> {
+  return {
+    DATALAYER_GTM: { count: 0, names: new Set() },
+    AUTOCAPTURE: { count: 0, names: new Set() },
+    CUSTOM_SDK: { count: 0, names: new Set() },
+  };
+}
+
+function addEventsToTotals(totals: Record<TrackingMethod, MethodTotals>, events: { eventName?: string; count?: number; trackingMethod?: TrackingMethod }[]): void {
+  for (const event of events) {
+    const method = event.trackingMethod ?? 'CUSTOM_SDK';
+    totals[method].count += event.count ?? 1;
+    totals[method].names.add(event.eventName ?? '(unnamed event)');
+  }
+}
+
+function formatDuration(startIso?: string, endIso?: string): string | null {
+  if (!startIso || !endIso) return null;
+  const ms = new Date(endIso).getTime() - new Date(startIso).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return null;
+  const totalSeconds = Math.round(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+}
+
+function shortenPath(url: string): string {
+  try {
+    const u = new URL(url);
+    return (u.pathname || '/') + (u.search || '');
+  } catch {
+    return url;
+  }
+}
+
+export default function ResultsView({ result, onRerun }: ResultsViewProps) {
+  const [expandedEventName, setExpandedEventName] = useState<string | null>(null);
+  const [filter, setFilter] = useState<EventFilter>('ALL');
+
+  const pages = result.pagesVisited ?? [];
+  const uniqueEvents = buildUniqueEventsSummary(result);
+  const totalFires = uniqueEvents.reduce((sum, e) => sum + e.totalCount, 0);
+  const collapsed = totalFires - uniqueEvents.length;
+  const newEventNames = new Set((result.historicalComparison?.newEvents ?? []).map(e => e.eventName ?? ''));
+
+  const methodTotals = emptyMethodTotals();
+  for (const page of pages) addEventsToTotals(methodTotals, page.capturedEvents ?? []);
+
+  const perPageTotals = pages.map(page => {
+    const totals = emptyMethodTotals();
+    addEventsToTotals(totals, page.capturedEvents ?? []);
+    return totals;
+  });
+  const perPageFires = perPageTotals.map(t => METHOD_ORDER.reduce((sum, m) => sum + t[m].count, 0));
+  const maxPageFires = Math.max(1, ...perPageFires);
+
+  const actionNames: string[] = [];
+  const matchedActionNames = new Set<string>();
+  let actionsMatched = 0;
+  let actionsTotal = 0;
+  for (const page of pages) {
+    for (const action of page.actionsAttempted ?? []) {
+      if (!action.actionName) continue;
+      if (!actionNames.includes(action.actionName)) actionNames.push(action.actionName);
+      actionsTotal += 1;
+      if (action.matched) {
+        actionsMatched += 1;
+        matchedActionNames.add(action.actionName);
+      }
+    }
+  }
+
+  const headerParts = [
+    result.exhaustive !== undefined ? (result.exhaustive ? 'Full Tracking' : 'Quick Scan') : null,
+    result.finishedAt ? new Date(result.finishedAt).toLocaleString() : null,
+    formatDuration(result.startedAt, result.finishedAt),
+  ].filter(Boolean);
+
+  const pagesAllowedText = result.effectiveMaxPages !== undefined
+    ? `of ${result.effectiveMaxPages} allowed${result.effectiveMaxDepth !== undefined ? ` · depth ${result.effectiveMaxDepth}` : ''}`
+    : null;
+
+  const coverage = result.trackingPlanCoverage;
+  const coveragePct = coverage && coverage.expectedCount ? Math.round(((coverage.observedCount ?? 0) / coverage.expectedCount) * 100) : 0;
+
+  const filteredEvents = uniqueEvents.filter(e => {
+    if (filter === 'ALL') return true;
+    if (filter === 'NEW') return newEventNames.has(e.eventName);
+    return e.methods.includes(filter);
+  });
+
+  return (
+    <div className="dashboard">
+      <div className="dashboard-header">
+        <div>
+          <div className="dashboard-header-meta">
+            <span className="badge success">COMPLETED</span>
+            {headerParts.length > 0 && <span className="dashboard-header-sub">{headerParts.join(' · ')}</span>}
+          </div>
+          <h1 className="dashboard-title">{result.targetUrl}</h1>
+        </div>
+        <div className="report-actions">
+          <button type="button" onClick={() => downloadResultAsJson(result)}>JSON</button>
+          <button type="button" onClick={() => downloadResultAsCsv(result)}>CSV</button>
+          {onRerun && result.targetUrl && (
+            <button type="button" className="dashboard-rerun" onClick={() => onRerun(result.targetUrl!)}>
+              Re-run scan
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="stat-tiles">
+        <div className="stat-tile">
+          <div className="stat-tile-label">Pages crawled</div>
+          <div className="stat-tile-value">{pages.length}</div>
+          {pagesAllowedText && <div className="stat-tile-sub">{pagesAllowedText}</div>}
+        </div>
+        <div className="stat-tile">
+          <div className="stat-tile-label">Unique events</div>
+          <div className="stat-tile-value">{uniqueEvents.length}</div>
+          {(result.historicalComparison?.newEvents?.length ?? 0) > 0 && (
+            <div className="stat-tile-sub positive">+{result.historicalComparison!.newEvents!.length} since last scan</div>
+          )}
+        </div>
+        <div className="stat-tile">
+          <div className="stat-tile-label">Total fires</div>
+          <div className="stat-tile-value">{totalFires}</div>
+          {collapsed > 0 && <div className="stat-tile-sub">{collapsed} repeat fires collapsed</div>}
+        </div>
+        <div className="stat-tile dark">
+          <div className="stat-tile-label">Actions matched</div>
+          <div className="stat-tile-value">
+            {actionsMatched}<span className="stat-tile-value-of">/{actionsTotal}</span>
+          </div>
+          {actionNames.length > 0 && (
+            <div className="stat-tile-segments">
+              {actionNames.map(name => (
+                <span key={name} className={`stat-segment ${matchedActionNames.has(name) ? 'on' : ''}`} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="dashboard-row">
+        <div className="panel">
+          <div className="panel-header">
+            <h3>How events are being sent</h3>
+            <span className="panel-meta">{totalFires} fires</span>
+          </div>
+          <div className="method-stacked-bar">
+            {METHOD_ORDER.filter(m => methodTotals[m].count > 0).map(m => (
+              <div
+                key={m}
+                className={`method-stacked-segment ${METHOD_COLOR_CLASS[m]}`}
+                style={{ width: `${(methodTotals[m].count / Math.max(1, totalFires)) * 100}%` }}
+              >
+                {METHOD_LABELS[m]} · {methodTotals[m].count}
+              </div>
+            ))}
+          </div>
+          <div className="method-breakdown-list">
+            {METHOD_ORDER.filter(m => methodTotals[m].count > 0).map(m => (
+              <div className="method-breakdown-row" key={m}>
+                <span className={`method-dot ${METHOD_COLOR_CLASS[m]}`} />
+                <span className="method-breakdown-name">{METHOD_LABELS[m]}</span>
+                <span className="method-breakdown-count-names">{methodTotals[m].names.size} distinct names</span>
+                <span className="method-breakdown-total">{methodTotals[m].count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {coverage && (
+          <div className="panel coverage-panel">
+            <h3>Tracking plan coverage</h3>
+            <div className="coverage-body">
+              <div
+                className="coverage-donut"
+                style={{ background: `conic-gradient(var(--color-orange) 0 ${coveragePct}%, var(--color-grey-200) ${coveragePct}% 100%)` }}
+              >
+                <div className="coverage-donut-inner">
+                  <span className="coverage-donut-value">{coverage.observedCount ?? 0}/{coverage.expectedCount ?? 0}</span>
+                  <span className="coverage-donut-label">observed</span>
+                </div>
+              </div>
+              {(coverage.missingEventNames?.length ?? 0) > 0 && (
+                <div className="coverage-missing">
+                  <div className="coverage-missing-label">Missing</div>
+                  {coverage.missingEventNames!.map(name => (
+                    <div className="coverage-missing-item" key={name}>{name}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="panel">
+        <div className="panel-header">
+          <h3>Events per page</h3>
+          <span className="panel-meta">bar length = fires captured</span>
+        </div>
+        <div className="page-bar-list">
+          {pages.map((page, i) => {
+            const totals = perPageTotals[i];
+            const pageTotal = perPageFires[i];
+            return (
+              <div className="page-bar-row" key={page.url ?? i}>
+                <span className="page-bar-url">{page.url}</span>
+                {pageTotal === 0 ? (
+                  <span className="page-bar-empty">no events captured</span>
+                ) : (
+                  <div className="page-bar-track">
+                    {METHOD_ORDER.filter(m => totals[m].count > 0).map(m => (
+                      <div
+                        key={m}
+                        className={`page-bar-segment ${METHOD_COLOR_CLASS[m]}`}
+                        style={{ width: `${(totals[m].count / maxPageFires) * 100}%` }}
+                      />
+                    ))}
+                  </div>
+                )}
+                <span className={`page-bar-total ${pageTotal === 0 ? 'zero' : ''}`}>{pageTotal}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="panel events-panel">
+        <div className="panel-header">
+          <h3>All events <span className="panel-count">{uniqueEvents.length}</span></h3>
+          <div className="filter-pills">
+            <button type="button" className={`pill ${filter === 'ALL' ? 'active' : ''}`} onClick={() => setFilter('ALL')}>All</button>
+            {METHOD_ORDER.filter(m => methodTotals[m].count > 0).map(m => (
+              <button
+                type="button"
+                key={m}
+                className={`pill ${filter === m ? 'active' : ''}`}
+                onClick={() => setFilter(m)}
+              >
+                {METHOD_LABELS[m]}
+              </button>
+            ))}
+            {newEventNames.size > 0 && (
+              <button type="button" className={`pill new ${filter === 'NEW' ? 'active' : ''}`} onClick={() => setFilter('NEW')}>
+                New only · {newEventNames.size}
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="events-table">
+          <div className="events-table-head">
+            <span>Event</span><span>Method</span><span>Pages</span><span>Fires</span>
+          </div>
+          {filteredEvents.length === 0 ? (
+            <p className="no-events-note">No events match this filter.</p>
+          ) : (
+            filteredEvents.map(e => {
+              const isOpen = expandedEventName === e.eventName;
+              const isNew = newEventNames.has(e.eventName);
+              return (
+                <div className="events-table-row-wrap" key={e.eventName}>
+                  <button
+                    type="button"
+                    className="events-table-row"
+                    onClick={() => setExpandedEventName(isOpen ? null : e.eventName)}
+                  >
+                    <span className="events-table-name">
+                      {e.eventName}
+                      {isNew && <span className="badge success small">NEW</span>}
+                    </span>
+                    <span className="events-table-method">
+                      {e.methods[0] && <span className={`method-dot ${METHOD_COLOR_CLASS[e.methods[0]]}`} />}
+                      {e.methods.map(m => METHOD_LABELS[m]).join(', ')}
+                    </span>
+                    <span>{e.pageCount}</span>
+                    <span className="events-table-fires">{e.totalCount}</span>
+                  </button>
+                  {isOpen && (
+                    <div className="events-table-detail">
+                      <EventDetails rawPayload={e.samplePayload} />
+                      <div className="events-table-where">
+                        <div className="events-table-where-label">Where it fired</div>
+                        <div className="action-badges">
+                          {e.pageUrls.slice(0, 6).map(url => (
+                            <span key={url} className="badge" title={url}>{shortenPath(url)}</span>
+                          ))}
+                          {e.pageUrls.length > 6 && (
+                            <span className="badge">+{e.pageUrls.length - 6} more</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

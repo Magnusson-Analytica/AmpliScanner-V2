@@ -1,0 +1,48 @@
+server:
+  port: 8080
+
+auditor:
+  amplitude:
+    host-patterns:
+      - api.amplitude.com
+      - api2.amplitude.com
+      - /.*\.amplitude\.com\/2\/httpapi.*/
+  discovery:
+    max-depth: 2
+    max-pages: 10
+    hard-max-depth: 5
+    hard-max-pages: 50
+    action-poll-timeout-ms: 3000
+    scroll-step-wait-ms: 800
+    navigation-timeout-ms: 15000
+    polite-delay-ms: 300
+    manual-login-timeout-ms: 300000
+    user-agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    exhaustive-max-elements: 40
+    exhaustive-exclude-keywords:
+      - delete
+      - remove
+      - unsubscribe
+      - cancel
+      - buy
+      - purchase
+      - checkout
+      - pay
+      - logout
+      - log out
+      - sign out
+      - deactivate
+      - close account
+      - delete account
+      - uninstall
+      - refund
+      - confirm order
+      - place order
+  reports:
+    save-to-disk: true
+    directory: reports
+
+spring:
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false

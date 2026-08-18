@@ -1,0 +1,118 @@
+actions:
+  - name: ACCEPT_COOKIES
+    type: CLICK
+    selectors:
+      - "#onetrust-accept-btn-handler"
+      - "#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"
+      - "#CybotCookiebotDialogBodyButtonAccept"
+      - "[id*=cookie] button[id*=accept]"
+      - "[class*=cookie] button[class*=accept]"
+      - "button[data-testid*=cookie-accept]"
+      - "button[aria-label*='accept' i][aria-label*='cookie' i]"
+    textMatches:
+      - "accept all"
+      - "accept cookies"
+      - "i agree"
+      - "allow all"
+      - "got it"
+
+  - name: SIGN_UP
+    type: CLICK
+    selectors:
+      - "[id*=signup]"
+      - "[class*=signup]"
+      - "button[aria-label*='sign up' i]"
+      - "a[aria-label*='sign up' i]"
+    textMatches:
+      - "sign up"
+      - "get started"
+      - "create account"
+      - "join now"
+
+  - name: GO_HOME
+    type: CLICK
+    selectors:
+      - "a[rel=home]"
+      - "header a[class*=logo]"
+      - "header img[alt*=logo]"
+      - "a.logo"
+    textMatches:
+      - "home"
+
+  - name: OPEN_MENU
+    type: CLICK
+    selectors:
+      - "button[aria-label*='menu' i]"
+      - "[class*=hamburger]"
+      - "[class*=menu-toggle]"
+      - "button[class*=nav-toggle]"
+    textMatches:
+      - "menu"
+
+  - name: SUBMIT_SEARCH
+    type: CLICK
+    selectors:
+      - "input[type=search]"
+      - "[role=search] input"
+      - "button[aria-label*='search' i]"
+    textMatches:
+      - "search"
+
+  - name: ADD_TO_CART
+    type: CLICK
+    selectors:
+      - "[id*=add-to-cart]"
+      - "[class*=add-to-cart]"
+      - "button[data-action*=cart]"
+    textMatches:
+      - "add to cart"
+      - "add to bag"
+
+  - name: CLICK_PRIMARY_CTA
+    type: CLICK
+    selectors:
+      - "[class*=cta-button]"
+      - "[class*=hero] a[class*=cta]"
+      - "[class*=hero] button[class*=cta]"
+      - "a[class*=btn-primary]"
+      - "button[class*=btn-primary]"
+    textMatches:
+      - "book a call"
+      - "schedule"
+      - "talk to us"
+      - "contact us"
+      - "learn more"
+
+  - name: OPEN_DROPDOWN
+    type: CLICK
+    selectors:
+      - "[aria-haspopup=true]"
+      - "button[class*=dropdown-toggle]"
+      - "[class*=dropdown] > button"
+
+  - name: SWITCH_TAB
+    type: CLICK
+    selectors:
+      - "[role=tab]"
+      - "[class*=tab-item]"
+      - "[class*=tabs] button"
+
+  - name: PLAY_VIDEO
+    type: CLICK
+    selectors:
+      - ".vjs-play-control"
+      - ".ytp-play-button"
+      - "[class*=play-button]"
+      - "[aria-label*='play' i]"
+    textMatches:
+      - "play"
+
+  - name: HOVER_NAV_MENU
+    type: HOVER
+    selectors:
+      - "nav li[class*=dropdown]"
+      - "nav [class*=has-submenu]"
+      - "header nav > ul > li"
+
+  - name: SCROLL_TO_BOTTOM
+    type: SCROLL

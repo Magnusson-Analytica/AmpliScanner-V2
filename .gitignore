@@ -1,0 +1,24 @@
+# Java / Maven
+backend/target/
+*.class
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+npm-debug.log*
+
+# Reports (generated output)
+backend/reports/
+
+# Env / secrets
+.env
+.env.*
+*.local
+
+# IDE
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
