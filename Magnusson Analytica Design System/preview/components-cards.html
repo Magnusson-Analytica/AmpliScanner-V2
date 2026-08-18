@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Cards" subtitle="Editorial card + dark stat card" viewport="700x220" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cards</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--surface-paper); font-family: var(--font-display); }
+  .wrap { padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .card {
+    background: #FFFFFF;
+    border: 1px solid rgba(26,26,26,0.10);
+    border-radius: 10px;
+    padding: 22px 22px;
+    display: flex; flex-direction: column; gap: 8px;
+    transition: box-shadow 220ms cubic-bezier(0.22,1,0.36,1), transform 220ms;
+  }
+  .card:hover { box-shadow: 0 2px 8px rgba(26,26,26,0.08), 0 1px 2px rgba(26,26,26,0.04); transform: translateY(-1px); }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #F3734F; }
+  .ttl { font-family: var(--font-display); font-weight: 700; font-size: 22px; color: #1A1A1A; letter-spacing: -0.015em; line-height: 1.2; margin: 0; }
+  .body { font-family: var(--font-serif); font-size: 14px; line-height: 1.55; color: #4A4944; margin: 4px 0 0; }
+  .meta { display: flex; gap: 8px; align-items: center; font-size: 11px; color: var(--fg-3); margin-top: auto; padding-top: 6px; }
+  .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--fg-3); display: inline-block; }
+  .stat-card {
+    background: #1A1A1A; color: #F5F0E8;
+    border: 1px solid rgba(245,240,232,0.10);
+    border-radius: 10px;
+    padding: 22px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .stat-num { font-family: var(--font-display); font-weight: 700; font-size: 48px; color: #F3734F; letter-spacing: -0.025em; line-height: 1; }
+  .stat-cap { font-family: var(--font-serif); font-size: 13px; color: #C9C2B4; line-height: 1.45; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <span class="eyebrow">Case study · 2025</span>
+    <h3 class="ttl">A weekly review the CEO actually reads</h3>
+    <p class="body">How we cut a Series-B fintech's weekly metrics down from 47 to 6.</p>
+    <div class="meta"><span>Northwind Labs</span><span class="dot"></span><span>12 weeks</span></div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-num">38%</span>
+    <span class="stat-cap">activation lift across three onboarding tests</span>
+  </div>
+</div>
+</body>
+</html>

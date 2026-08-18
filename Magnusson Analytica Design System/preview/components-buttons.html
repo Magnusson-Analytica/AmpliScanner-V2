@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Buttons" subtitle="Primary / secondary / ghost — on paper and on ink" viewport="700x240" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Buttons</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--surface-paper); font-family: var(--font-display); }
+  .wrap { padding: 22px 24px; display: flex; flex-direction: column; gap: 14px; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .btn {
+    font-family: var(--font-display);
+    font-size: 15px; font-weight: 600;
+    padding: 11px 20px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 140ms cubic-bezier(0.22,1,0.36,1);
+    line-height: 1;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn .arr { transition: transform 220ms cubic-bezier(0.22,1,0.36,1); }
+  .btn:hover .arr { transform: translateX(3px); }
+  .primary { background: #F3734F; color: #1A1A1A; }
+  .primary:hover { background: #D85A36; }
+  .secondary { background: transparent; color: #1A1A1A; border-color: rgba(26,26,26,0.18); }
+  .secondary:hover { background: #EDE6D8; }
+  .ghost { background: transparent; color: #1A1A1A; }
+  .ghost:hover { background: rgba(26,26,26,0.06); }
+  .dark-row { background: #1A1A1A; padding: 16px 18px; border-radius: 8px; display: flex; gap: 12px; }
+  .on-ink-primary { background: #F3734F; color: #1A1A1A; }
+  .on-ink-secondary { background: transparent; color: #F5F0E8; border-color: rgba(245,240,232,0.22); }
+  .label { font-size: 10px; letter-spacing: var(--ls-eyebrow); text-transform: uppercase; font-weight: 600; color: var(--fg-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="label">On paper</div>
+  <div class="row">
+    <button class="btn primary">Start a project <span class="arr">→</span></button>
+    <button class="btn secondary">Read the case</button>
+    <button class="btn ghost">Learn more</button>
+  </div>
+  <div class="label">On ink</div>
+  <div class="dark-row">
+    <button class="btn on-ink-primary">Book a discovery call <span class="arr">→</span></button>
+    <button class="btn on-ink-secondary">View pricing</button>
+  </div>
+</div>
+</body>
+</html>

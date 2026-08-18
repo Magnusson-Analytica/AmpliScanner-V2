@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Website" name="Marketing site" subtitle="Full marketing site UI kit — click-thru" viewport="1280x900" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Magnusson Analytica — Marketing site UI kit</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--surface-paper); color: var(--fg-1); }
+  * { box-sizing: border-box; }
+  a { color: inherit; }
+  /* hide scrollbar styling */
+  html { scroll-behavior: smooth; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="Header.jsx"></script>
+<script type="text/babel" src="Hero.jsx"></script>
+<script type="text/babel" src="Services.jsx"></script>
+<script type="text/babel" src="CaseStudies.jsx"></script>
+<script type="text/babel" src="Quote.jsx"></script>
+<script type="text/babel" src="Journal.jsx"></script>
+<script type="text/babel" src="Contact.jsx"></script>
+<script type="text/babel" src="Footer.jsx"></script>
+
+<script type="text/babel">
+function App() {
+  const [openCase, setOpenCase] = React.useState(null);
+  const onNav = (key) => {
+    const id = { home: 'top', work: 'services', cases: 'cases', journal: 'journal', about: 'services', contact: 'contact' }[key];
+    if (id === 'top') window.scrollTo({ top: 0, behavior: 'smooth' });
+    else document.getElementById(id)?.scrollIntoView ? document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' }) : null;
+  };
+  return (
+    <>
+      <Header onNav={onNav} />
+      <main id="top">
+        <Hero onNav={onNav} />
+        <div id="services"><Services /></div>
+        <div id="cases"><CaseStudies onOpen={setOpenCase} /></div>
+        <Quote />
+        <div id="journal"><Journal /></div>
+        <div id="contact"><Contact /></div>
+      </main>
+      <Footer />
+      {openCase && (
+        <div onClick={() => setOpenCase(null)} style={{
+          position: 'fixed', inset: 0, background: 'rgba(26,26,26,0.55)',
+          backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 24,
+        }}>
+          <div onClick={(e) => e.stopPropagation()} style={{
+            background: '#FFFFFF', maxWidth: 720, width: '100%', borderRadius: 10, padding: 40,
+            boxShadow: '0 20px 48px rgba(26,26,26,0.14)',
+          }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#F3734F', marginBottom: 12 }}>Case study preview</div>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 32, margin: 0, letterSpacing: '-0.02em', color: '#1A1A1A' }}>Read the full case</h3>
+            <p style={{ fontFamily: 'var(--font-serif)', fontSize: 17, lineHeight: 1.6, color: '#4A4944', marginTop: 16 }}>
+              Full case studies live on dedicated pages — this is a stub for the click-thru. The card you tapped is <em>{openCase}</em>.
+            </p>
+            <button onClick={() => setOpenCase(null)} style={{
+              marginTop: 24, background: '#F3734F', color: '#1A1A1A', border: 'none',
+              padding: '12px 20px', borderRadius: 6, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+            }}>Close</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

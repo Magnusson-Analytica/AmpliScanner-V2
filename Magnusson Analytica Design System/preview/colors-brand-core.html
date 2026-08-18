@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Colors" name="Colors · Brand core" subtitle="Ember · Ink · Paper" viewport="700x220" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Brand Colors</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--surface-paper); font-family: var(--font-display); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    height: 220px;
+  }
+  .swatch {
+    position: relative;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 16px 18px;
+  }
+  .name {
+    font-weight: 700; font-size: 18px; letter-spacing: -0.01em;
+  }
+  .hex {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 12px; margin-top: 2px; opacity: 0.78;
+  }
+  .role {
+    position: absolute; top: 14px; left: 18px;
+    font-size: 10px; letter-spacing: var(--ls-eyebrow); text-transform: uppercase;
+    font-weight: 600; opacity: 0.7;
+  }
+  .ember { background: #F3734F; color: #1A1A1A; }
+  .ink   { background: #1A1A1A; color: #F5F0E8; }
+  .paper { background: #F5F0E8; color: #1A1A1A; border-right: 1px solid var(--border-1); }
+</style>
+</head>
+<body>
+<div class="grid">
+  <div class="swatch ember">
+    <div class="role">Primary</div>
+    <div class="name">Ember</div>
+    <div class="hex">#F3734F</div>
+  </div>
+  <div class="swatch ink">
+    <div class="role">Surface · Type</div>
+    <div class="name">Ink</div>
+    <div class="hex">#1A1A1A</div>
+  </div>
+  <div class="swatch paper">
+    <div class="role">Substrate</div>
+    <div class="name">Paper</div>
+    <div class="hex">#F5F0E8</div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Colors" name="Colors · In use" subtitle="Ember on paper / ember on ink — the two key pairings" viewport="700x240" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Brand color in use</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--surface-paper); }
+  .wrap { display: grid; grid-template-columns: 1fr 1fr; height: 240px; }
+  .pane { padding: 24px 26px; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+  .light { background: #F5F0E8; }
+  .dark { background: #1A1A1A; }
+  .eyebrow { font-family: var(--font-display); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #F3734F; }
+  .h { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1.1; letter-spacing: -0.02em; margin: 0; }
+  .light .h { color: #1A1A1A; font-weight: 400; }
+  .dark .h { color: #F5F0E8; font-weight: 400; }
+  .body { font-family: var(--font-serif); font-size: 14px; line-height: 1.55; margin: 4px 0 0; }
+  .light .body { color: #4A4944; }
+  .dark .body { color: #C9C2B4; }
+  em { color: #F3734F; font-style: normal; font-weight: 400; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="pane light">
+    <span class="eyebrow">What we do</span>
+    <h2 class="h">The metric that <em>moves</em> the business.</h2>
+    <p class="body">Ember on paper — the default brand pairing.</p>
+  </div>
+  <div class="pane dark">
+    <span class="eyebrow">From the journal</span>
+    <h2 class="h">Six numbers, <em>read weekly</em>.</h2>
+    <p class="body">Ember + cream on ink — the emphasis pairing.</p>
+  </div>
+</div>
+</body>
+</html>

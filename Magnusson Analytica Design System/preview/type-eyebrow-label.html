@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Type" name="Type · Eyebrows & labels" subtitle="Eyebrow / label / caption — Outfit" viewport="700x220" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Type — Eyebrow & Labels</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--surface-paper); }
+  .wrap { padding: 22px 26px; display: flex; flex-direction: column; gap: 18px; }
+  .eyebrow {
+    font-family: var(--font-display);
+    font-weight: 500; font-size: 12px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--brand-ember);
+  }
+  .label {
+    font-family: var(--font-display);
+    font-weight: 400; font-size: 14px;
+    color: var(--fg-1);
+    text-transform: capitalize;
+  }
+  .caption {
+    font-family: var(--font-display);
+    font-size: 12px; color: var(--fg-3);
+    letter-spacing: -0.005em;
+  }
+  .row { display: flex; align-items: baseline; gap: 16px; }
+  .meta {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10px; color: var(--fg-3);
+  }
+  hr { border: 0; border-top: 1px solid var(--border-1); margin: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row"><span class="eyebrow">Case study · 2025</span><span class="meta">Outfit 500 · 12 · +14% tracking</span></div>
+  <hr>
+  <div class="row"><span class="label">Engagement model</span><span class="meta">Outfit 400 · 14</span></div>
+  <hr>
+  <div class="row"><span class="caption">Last updated 6 days ago · 4 min read</span><span class="meta">Outfit 400 · 12</span></div>
+</div>
+</body>
+</html>

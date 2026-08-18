@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Spacing" name="Shadows · Elevation" subtitle="Four-step warm-tinted elevation" viewport="700x180" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shadows / Elevation</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--surface-paper); font-family: var(--font-display); }
+  .wrap {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    align-items: center;
+    gap: 18px;
+    padding: 32px 24px;
+  }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .card {
+    width: 110px; height: 70px;
+    background: #fff;
+    border: 1px solid var(--border-1);
+    border-radius: 10px;
+  }
+  .e1 { box-shadow: 0 1px 2px rgba(26,26,26,0.06); }
+  .e2 { box-shadow: 0 2px 8px rgba(26,26,26,0.08), 0 1px 2px rgba(26,26,26,0.04); }
+  .e3 { box-shadow: 0 8px 24px rgba(26,26,26,0.10), 0 2px 4px rgba(26,26,26,0.04); }
+  .e4 { box-shadow: 0 20px 48px rgba(26,26,26,0.14), 0 4px 8px rgba(26,26,26,0.06); }
+  .nm { font-size: 11px; color: var(--fg-1); font-weight: 600; }
+  .px { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--fg-3); text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="item"><div class="card e1"></div><div class="nm">shadow-1</div><div class="px">resting raise</div></div>
+  <div class="item"><div class="card e2"></div><div class="nm">shadow-2</div><div class="px">card hover</div></div>
+  <div class="item"><div class="card e3"></div><div class="nm">shadow-3</div><div class="px">popover / menu</div></div>
+  <div class="item"><div class="card e4"></div><div class="nm">shadow-4</div><div class="px">modal</div></div>
+</div>
+</body>
+</html>

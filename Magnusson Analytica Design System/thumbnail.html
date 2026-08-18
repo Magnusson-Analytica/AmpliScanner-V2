@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Magnusson Analytica</title>
+<link rel="stylesheet" href="colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; }
+  .wrap {
+    width: 1280px; height: 854px;
+    display: grid; grid-template-columns: 1fr 120px;
+    background: var(--brand-ember);
+  }
+  .main {
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 64px;
+  }
+  .mark { width: 180px; height: 180px; display: block; }
+  .swatches {
+    display: grid; grid-template-rows: repeat(3, 1fr);
+    height: 100%;
+  }
+  .swatch { width: 120px; }
+  .s1 { background: #F5F0E8; }
+  .s2 { background: #F3734F; }
+  .s3 { background: #1A1A1A; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="main">
+    <img src="assets/logo-mark-cream.png" class="mark" alt="Magnusson Analytica">
+  </div>
+  <div class="swatches">
+    <div class="swatch s1"></div>
+    <div class="swatch s2"></div>
+    <div class="swatch s3"></div>
+  </div>
+</div>
+</body>
+</html>

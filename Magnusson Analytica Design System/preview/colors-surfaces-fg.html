@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Colors" name="Colors · Surfaces & foreground" subtitle="Surface scale and warm-grey type scale" viewport="700x200" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Surface & Foreground Scales</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--surface-paper); font-family: var(--font-display); }
+  .wrap { padding: 18px 22px; }
+  .row {
+    display: grid;
+    grid-template-columns: 84px 1fr;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 10px;
+  }
+  .row-label {
+    font-size: 10px; letter-spacing: var(--ls-eyebrow);
+    text-transform: uppercase; font-weight: 600; color: var(--fg-3);
+  }
+  .scale {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    height: 56px; border: 1px solid var(--border-1); border-radius: 6px; overflow: hidden;
+  }
+  .cell {
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 6px 8px;
+    font-family: ui-monospace, Menlo, monospace; font-size: 10px;
+  }
+  .cell .nm { font-family: var(--font-display); font-weight: 600; font-size: 11px; }
+  /* surfaces light */
+  .s1 { background: #F5F0E8; color: #1A1A1A; }
+  .s2 { background: #EDE6D8; color: #1A1A1A; }
+  .s3 { background: #FFFFFF; color: #1A1A1A; }
+  .s4 { background: #1A1A1A; color: #F5F0E8; }
+  /* fg on light */
+  .f1 { background: #1A1A1A; color: #F5F0E8; }
+  .f2 { background: #4A4944; color: #F5F0E8; }
+  .f3 { background: #807C72; color: #F5F0E8; }
+  .f4 { background: #B8B2A4; color: #1A1A1A; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row">
+    <div class="row-label">Surfaces</div>
+    <div class="scale">
+      <div class="cell s1"><span class="nm">paper</span><span>#F5F0E8</span></div>
+      <div class="cell s2"><span class="nm">paper-2</span><span>#EDE6D8</span></div>
+      <div class="cell s3"><span class="nm">card</span><span>#FFFFFF</span></div>
+      <div class="cell s4"><span class="nm">ink</span><span>#1A1A1A</span></div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="row-label">Foreground</div>
+    <div class="scale">
+      <div class="cell f1"><span class="nm">fg-1</span><span>#1A1A1A</span></div>
+      <div class="cell f2"><span class="nm">fg-2</span><span>#4A4944</span></div>
+      <div class="cell f3"><span class="nm">fg-3</span><span>#807C72</span></div>
+      <div class="cell f4"><span class="nm">fg-4</span><span>#B8B2A4</span></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

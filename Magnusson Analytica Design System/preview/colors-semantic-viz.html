@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Colors" name="Colors · Semantic & data viz" subtitle="Semantic states + 7-stop viz palette" viewport="700x220" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Semantic & Data Viz Colors</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--surface-paper); font-family: var(--font-display); }
+  .wrap { padding: 18px 22px; }
+  .label {
+    font-size: 10px; letter-spacing: var(--ls-eyebrow);
+    text-transform: uppercase; font-weight: 600; color: var(--fg-3);
+    margin-bottom: 8px;
+  }
+  .strip {
+    display: grid; height: 56px;
+    border-radius: 6px; overflow: hidden; margin-bottom: 14px;
+    border: 1px solid var(--border-1);
+  }
+  .sem { grid-template-columns: repeat(4, 1fr); }
+  .viz { grid-template-columns: repeat(7, 1fr); }
+  .cell {
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 6px 8px; color: #fff;
+  }
+  .cell .nm { font-family: var(--font-display); font-weight: 600; font-size: 11px; }
+  .cell .hx { font-family: ui-monospace, Menlo, monospace; font-size: 10px; opacity: 0.85; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="label">Semantic</div>
+  <div class="strip sem">
+    <div class="cell" style="background:#4F7A52"><span class="nm">positive</span><span class="hx">#4F7A52</span></div>
+    <div class="cell" style="background:#C99A2E"><span class="nm">warning</span><span class="hx">#C99A2E</span></div>
+    <div class="cell" style="background:#B14A3A"><span class="nm">negative</span><span class="hx">#B14A3A</span></div>
+    <div class="cell" style="background:#3F6E84"><span class="nm">info</span><span class="hx">#3F6E84</span></div>
+  </div>
+  <div class="label">Data viz</div>
+  <div class="strip viz">
+    <div class="cell" style="background:#F3734F;color:#1A1A1A"><span class="nm">viz-1</span><span class="hx">ember</span></div>
+    <div class="cell" style="background:#1A1A1A"><span class="nm">viz-2</span><span class="hx">ink</span></div>
+    <div class="cell" style="background:#C99A2E"><span class="nm">viz-3</span><span class="hx">mustard</span></div>
+    <div class="cell" style="background:#4F7A52"><span class="nm">viz-4</span><span class="hx">forest</span></div>
+    <div class="cell" style="background:#3F6E84"><span class="nm">viz-5</span><span class="hx">slate</span></div>
+    <div class="cell" style="background:#8A4F7D"><span class="nm">viz-6</span><span class="hx">plum</span></div>
+    <div class="cell" style="background:#F8A285;color:#1A1A1A"><span class="nm">viz-7</span><span class="hx">tint</span></div>
+  </div>
+</div>
+</body>
+</html>

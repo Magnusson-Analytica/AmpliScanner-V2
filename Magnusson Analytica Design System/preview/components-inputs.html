@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Form inputs" subtitle="Text fields, focus, error, checkboxes" viewport="700x280" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Inputs & Form fields</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--surface-paper); font-family: var(--font-display); }
+  .wrap { padding: 22px 26px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .lbl {
+    font-size: 12px; font-weight: 600; color: var(--fg-1);
+    letter-spacing: 0;
+  }
+  .input {
+    font-family: var(--font-display);
+    font-size: 14px; color: var(--fg-1);
+    padding: 10px 12px;
+    background: #FFF;
+    border: 1px solid rgba(26,26,26,0.18);
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 140ms, box-shadow 140ms;
+  }
+  .input::placeholder { color: var(--fg-3); }
+  .input:focus { border-color: #F3734F; box-shadow: 0 0 0 3px rgba(243,115,79,0.18); }
+  .input.err { border-color: #B14A3A; }
+  .help { font-size: 11px; color: var(--fg-3); }
+  .err-msg { font-size: 11px; color: #B14A3A; }
+  .check { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--fg-1); }
+  .box {
+    width: 16px; height: 16px; border-radius: 3px;
+    border: 1.5px solid #1A1A1A; background: #F3734F;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #1A1A1A; font-weight: 700; font-size: 12px; line-height: 1;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="field">
+    <label class="lbl">Work email</label>
+    <input class="input" placeholder="you@company.com">
+    <span class="help">We'll only use this to follow up.</span>
+  </div>
+  <div class="field">
+    <label class="lbl">Company</label>
+    <input class="input" value="Northwind Labs">
+  </div>
+  <div class="field">
+    <label class="lbl">Stage</label>
+    <input class="input" value="Series B" style="border-color:#F3734F; box-shadow: 0 0 0 3px rgba(243,115,79,0.18)">
+    <span class="help">Focused state · ember ring</span>
+  </div>
+  <div class="field">
+    <label class="lbl">Team size</label>
+    <input class="input err" value="0">
+    <span class="err-msg">Must be at least 1.</span>
+  </div>
+  <div class="check"><span class="box">✓</span> Subscribe to The Margin (monthly)</div>
+  <div class="check"><span class="box" style="background:#FFF">&nbsp;</span> Send me the case-study PDF</div>
+</div>
+</body>
+</html>

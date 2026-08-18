@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Brand" name="Wordmark lockup" subtitle="Stacked + horizontal lockups (Outfit Bold)" viewport="700x200" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wordmark — Magnusson Analytica</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--surface-paper); font-family: var(--font-display); }
+  .wrap {
+    height: 200px;
+    display: flex; align-items: center; gap: 28px;
+    padding: 0 36px;
+  }
+  .mark { width: 64px; height: 64px; display: block; }
+  .word {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--fg-1);
+    font-size: 44px;
+    letter-spacing: -0.025em;
+    line-height: 1;
+  }
+  .dot { color: var(--brand-ember); }
+  .ul-m {
+    text-decoration: underline;
+    text-decoration-color: var(--brand-ember);
+    text-decoration-thickness: 0.12em;
+    text-underline-offset: 0.12em;
+  }
+  .divider {
+    width: 1px; height: 80px;
+    background: var(--border-1);
+  }
+  .horiz { display: flex; align-items: center; gap: 14px; }
+  .horiz .mark-sm { width: 40px; height: 40px; }
+  .horiz .word-sm {
+    font-family: var(--font-display);
+    font-weight: 700; font-size: 26px;
+    color: var(--fg-1); letter-spacing: -0.02em; line-height: 1;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <img src="../assets/logo-mark-cream.png" class="mark" alt="">
+  <div class="word"><span class="ul-m">m</span>agnusson<span class="dot">.</span></div>
+  <div class="divider"></div>
+  <div class="horiz">
+    <img src="../assets/logo-mark-cream.png" class="mark-sm" alt="">
+    <div class="word-sm"><span class="ul-m">m</span>agnusson<span class="dot">.</span></div>
+  </div>
+</div>
+</body>
+</html>

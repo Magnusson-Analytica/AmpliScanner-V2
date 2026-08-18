@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Badges, pills & tags" subtitle="Pills, status dots, square tags" viewport="700x220" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Badges, Tags, Pills</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--surface-paper); font-family: var(--font-display); }
+  .wrap { padding: 22px 26px; display: flex; flex-direction: column; gap: 14px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .label { font-size: 10px; letter-spacing: var(--ls-eyebrow); text-transform: uppercase; font-weight: 600; color: var(--fg-3); width: 88px; }
+  .pill {
+    font-family: var(--font-display);
+    font-size: 12px; font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 999px;
+    line-height: 1.4;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .tone-neutral { background: #EDE6D8; color: #1A1A1A; }
+  .tone-ember { background: #F3734F; color: #1A1A1A; }
+  .tone-ink { background: #1A1A1A; color: #F5F0E8; }
+  .tone-positive { background: rgba(79,122,82,0.12); color: #4F7A52; }
+  .tone-warning { background: rgba(201,154,46,0.14); color: #876615; }
+  .tone-negative { background: rgba(177,74,58,0.12); color: #B14A3A; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .tag-square {
+    font-family: var(--font-display);
+    font-size: 11px; font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: transparent;
+    border: 1px solid rgba(26,26,26,0.18);
+    color: #1A1A1A;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row"><span class="label">Pills</span>
+    <span class="pill tone-neutral">Retention</span>
+    <span class="pill tone-ember">Featured</span>
+    <span class="pill tone-ink">Premium</span>
+  </div>
+  <div class="row"><span class="label">Status</span>
+    <span class="pill tone-positive"><span class="dot" style="background:#4F7A52"></span> Live</span>
+    <span class="pill tone-warning"><span class="dot" style="background:#C99A2E"></span> In review</span>
+    <span class="pill tone-negative"><span class="dot" style="background:#B14A3A"></span> Blocked</span>
+  </div>
+  <div class="row"><span class="label">Tags</span>
+    <span class="tag-square">SaaS</span>
+    <span class="tag-square">B2B</span>
+    <span class="tag-square">Activation</span>
+    <span class="tag-square">Series B</span>
+  </div>
+</div>
+</body>
+</html>

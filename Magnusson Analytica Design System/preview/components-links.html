@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Links" subtitle="In-prose underline, arrow link, external" viewport="700x200" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Links & Inline Actions</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--surface-paper); }
+  .wrap { padding: 22px 26px; display: flex; flex-direction: column; gap: 16px; }
+  .label { font-family: var(--font-display); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; color: var(--fg-3); }
+  .row { display: flex; gap: 24px; align-items: baseline; flex-wrap: wrap; }
+  .text-link {
+    font-family: var(--font-serif); font-size: 16px; color: #1A1A1A;
+    text-decoration: none;
+    background-image: linear-gradient(#F3734F, #F3734F);
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    background-size: 100% 1px;
+    transition: background-size 220ms cubic-bezier(0.22,1,0.36,1);
+    padding-bottom: 1px;
+  }
+  .text-link:hover { background-size: 100% 2px; }
+  .arrow-link {
+    font-family: var(--font-display); font-weight: 600; font-size: 14px;
+    color: #1A1A1A; text-decoration: none;
+    display: inline-flex; gap: 6px; align-items: center;
+  }
+  .arrow-link .arr { color: #F3734F; transition: transform 220ms cubic-bezier(0.22,1,0.36,1); }
+  .arrow-link:hover .arr { transform: translateX(3px); }
+  .ext { color: #F3734F; font-family: var(--font-display); font-weight: 600; font-size: 14px; text-decoration: none; }
+  .ext:hover { text-decoration: underline; text-underline-offset: 3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <div class="label" style="margin-bottom:6px">In-prose link (animated underline)</div>
+    <div style="font-family: var(--font-serif); font-size:16px; color:#4A4944; line-height:1.6">
+      We help teams find <a href="#" class="text-link">the metric that moves the business</a> — and the system to move it.
+    </div>
+  </div>
+  <div>
+    <div class="label" style="margin-bottom:6px">Standalone link styles</div>
+    <div class="row">
+      <a href="#" class="arrow-link">Read the case <span class="arr">→</span></a>
+      <a href="#" class="ext">Open in a new tab ↗</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

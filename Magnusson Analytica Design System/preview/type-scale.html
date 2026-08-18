@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Type" name="Type · Scale" subtitle="Major-third ramp 12 → 60" viewport="700x360" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Type Scale</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--surface-paper); }
+  .wrap { padding: 16px 24px; }
+  .row {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    align-items: baseline;
+    gap: 16px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border-1);
+  }
+  .row:last-child { border-bottom: 0; }
+  .tag {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px; color: var(--fg-3);
+  }
+  .spec { font-family: var(--font-display); font-weight: 600; color: var(--fg-1); letter-spacing: -0.02em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row"><span class="tag">12</span><span class="spec" style="font-size:12px">Eyebrow</span></div>
+  <div class="row"><span class="tag">14</span><span class="spec" style="font-size:14px">Caption / label</span></div>
+  <div class="row"><span class="tag">16</span><span class="spec" style="font-size:16px">Body</span></div>
+  <div class="row"><span class="tag">20</span><span class="spec" style="font-size:20px">Lead</span></div>
+  <div class="row"><span class="tag">24</span><span class="spec" style="font-size:24px">H5 / Card title</span></div>
+  <div class="row"><span class="tag">36</span><span class="spec" style="font-size:36px">H3</span></div>
+  <div class="row"><span class="tag">60</span><span class="spec" style="font-size:60px;line-height:1">H1</span></div>
+</div>
+</body>
+</html>

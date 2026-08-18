@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Brand" name="Logo · M mark" subtitle="Primary mark on paper and on ink" viewport="700x220" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Brand Logos — Magnusson Analytica</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: var(--surface-paper); font-family: var(--font-display); }
+  .wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: 220px;
+    gap: 0;
+  }
+  .pane {
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .light { background: var(--surface-paper); }
+  .dark  { background: var(--surface-ink); }
+  .pane img { width: 120px; height: 120px; display: block; }
+  .label {
+    position: absolute; bottom: 12px; left: 14px;
+    font-family: var(--font-display);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: var(--ls-eyebrow);
+    text-transform: uppercase;
+  }
+  .light .label { color: var(--fg-3); }
+  .dark .label  { color: var(--fg-on-ink-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="pane light">
+    <img src="../assets/logo-mark-cream.png" alt="Magnusson M mark on cream">
+    <span class="label">Mark · on paper</span>
+  </div>
+  <div class="pane dark">
+    <img src="../assets/logo-mark-dark.png" alt="Magnusson M mark on ink">
+    <span class="label">Mark · on ink</span>
+  </div>
+</div>
+</body>
+</html>
