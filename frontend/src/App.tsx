@@ -32,6 +32,7 @@ function App() {
         {tab === 'scan' ? (
           <>
             <header>
+              <div className="eyebrow">Scan</div>
               <h1>Scan a site</h1>
               <p>Paste a URL, scan the site, and see every Amplitude event that fired.</p>
             </header>

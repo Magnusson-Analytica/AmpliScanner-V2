@@ -212,15 +212,15 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
         <div>
           <div className="dashboard-header-meta">
             <span className="badge success">COMPLETED</span>
-            {headerParts.length > 0 && <span className="dashboard-header-sub">{headerParts.join(' · ')}</span>}
+            {headerParts.length > 0 && <span className="caption">{headerParts.join(' · ')}</span>}
           </div>
           <h1 className="dashboard-title">{result.targetUrl}</h1>
         </div>
         <div className="report-actions">
-          <button type="button" onClick={() => downloadResultAsJson(result)}>JSON</button>
-          <button type="button" onClick={() => downloadResultAsCsv(result)}>CSV</button>
+          <button type="button" className="outline-action" onClick={() => downloadResultAsJson(result)}>JSON</button>
+          <button type="button" className="outline-action" onClick={() => downloadResultAsCsv(result)}>CSV</button>
           {onRerun && result.targetUrl && (
-            <button type="button" className="dashboard-rerun" onClick={() => onRerun(result.targetUrl!)}>
+            <button type="button" className="primary-action" onClick={() => onRerun(result.targetUrl!)}>
               Re-run scan
             </button>
           )}
@@ -229,25 +229,25 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
 
       <div className="stat-tiles">
         <div className="stat-tile">
-          <div className="stat-tile-label">Pages crawled</div>
-          <div className="stat-tile-value">{pages.length}</div>
-          {pagesAllowedText && <div className="stat-tile-sub">{pagesAllowedText}</div>}
+          <span className="caption stat-tile-label">Pages crawled</span>
+          <span className="tabular stat-tile-value">{pages.length}</span>
+          {pagesAllowedText && <span className="caption stat-tile-sub">{pagesAllowedText}</span>}
         </div>
         <div className="stat-tile">
-          <div className="stat-tile-label">Unique events</div>
-          <div className="stat-tile-value">{uniqueEvents.length}</div>
+          <span className="caption stat-tile-label">Unique events</span>
+          <span className="tabular stat-tile-value">{uniqueEvents.length}</span>
           {(result.historicalComparison?.newEvents?.length ?? 0) > 0 && (
-            <div className="stat-tile-sub positive">+{result.historicalComparison!.newEvents!.length} since last scan</div>
+            <span className="caption stat-tile-sub positive">+{result.historicalComparison!.newEvents!.length} since last scan</span>
           )}
         </div>
         <div className="stat-tile">
-          <div className="stat-tile-label">Total fires</div>
-          <div className="stat-tile-value">{totalFires}</div>
-          {collapsed > 0 && <div className="stat-tile-sub">{collapsed} repeat fires collapsed</div>}
+          <span className="caption stat-tile-label">Total fires</span>
+          <span className="tabular stat-tile-value">{totalFires}</span>
+          {collapsed > 0 && <span className="caption stat-tile-sub">{collapsed} repeat fires collapsed</span>}
         </div>
         <div className="stat-tile dark">
-          <div className="stat-tile-label">Actions matched</div>
-          <div className="stat-tile-value">
+          <span className="caption stat-tile-label">Actions matched</span>
+          <div className="tabular stat-tile-value">
             {actionsMatched}<span className="stat-tile-value-of">/{actionsTotal}</span>
           </div>
           {actionNames.length > 0 && (
@@ -264,7 +264,7 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
         <div className="panel">
           <div className="panel-header">
             <h3>How events are being sent</h3>
-            <span className="panel-meta">{totalFires} fires</span>
+            <span className="caption panel-meta">{totalFires} fires</span>
           </div>
           <div className="method-stacked-bar">
             {METHOD_ORDER.filter(m => methodTotals[m].count > 0).map(m => (
@@ -281,9 +281,9 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
             {METHOD_ORDER.filter(m => methodTotals[m].count > 0).map(m => (
               <div className="method-breakdown-row" key={m}>
                 <span className={`method-dot ${METHOD_COLOR_CLASS[m]}`} />
-                <span className="method-breakdown-name">{METHOD_LABELS[m]}</span>
-                <span className="method-breakdown-count-names">{methodTotals[m].names.size} distinct names</span>
-                <span className="method-breakdown-total">{methodTotals[m].count}</span>
+                <span className="label method-breakdown-name">{METHOD_LABELS[m]}</span>
+                <span className="caption method-breakdown-count-names">{methodTotals[m].names.size} distinct names</span>
+                <span className="tabular label method-breakdown-total">{methodTotals[m].count}</span>
               </div>
             ))}
           </div>
@@ -295,18 +295,18 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
             <div className="coverage-body">
               <div
                 className="coverage-donut"
-                style={{ background: `conic-gradient(var(--color-orange) 0 ${coveragePct}%, var(--color-grey-200) ${coveragePct}% 100%)` }}
+                style={{ background: `conic-gradient(var(--brand-ember) 0 ${coveragePct}%, var(--surface-paper-2) ${coveragePct}% 100%)` }}
               >
                 <div className="coverage-donut-inner">
-                  <span className="coverage-donut-value">{coverage.observedCount ?? 0}/{coverage.expectedCount ?? 0}</span>
-                  <span className="coverage-donut-label">observed</span>
+                  <span className="tabular coverage-donut-value">{coverage.observedCount ?? 0}/{coverage.expectedCount ?? 0}</span>
+                  <span className="caption">observed</span>
                 </div>
               </div>
               {(coverage.missingEventNames?.length ?? 0) > 0 && (
                 <div className="coverage-missing">
-                  <div className="coverage-missing-label">Missing</div>
+                  <span className="label">Missing</span>
                   {coverage.missingEventNames!.map(name => (
-                    <div className="coverage-missing-item" key={name}>{name}</div>
+                    <span className="body-sm coverage-missing-item" key={name}>{name}</span>
                   ))}
                 </div>
               )}
@@ -318,7 +318,7 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
       <div className="panel">
         <div className="panel-header">
           <h3>Events per page</h3>
-          <span className="panel-meta">bar length = fires captured</span>
+          <span className="caption panel-meta">bar length = fires captured</span>
         </div>
         <div className="page-bar-list">
           {pages.map((page, i) => {
@@ -326,9 +326,9 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
             const pageTotal = perPageFires[i];
             return (
               <div className="page-bar-row" key={page.url ?? i}>
-                <span className="page-bar-url">{page.url}</span>
+                <span className="body-sm page-bar-url">{page.url}</span>
                 {pageTotal === 0 ? (
-                  <span className="page-bar-empty">no events captured</span>
+                  <span className="caption">no events captured</span>
                 ) : (
                   <div className="page-bar-track">
                     {METHOD_ORDER.filter(m => totals[m].count > 0).map(m => (
@@ -340,7 +340,7 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
                     ))}
                   </div>
                 )}
-                <span className={`page-bar-total ${pageTotal === 0 ? 'zero' : ''}`}>{pageTotal}</span>
+                <span className={`tabular label page-bar-total ${pageTotal === 0 ? 'zero' : ''}`}>{pageTotal}</span>
               </div>
             );
           })}
@@ -349,7 +349,7 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
 
       <div className="panel events-panel">
         <div className="panel-header">
-          <h3>All events <span className="panel-count">{uniqueEvents.length}</span></h3>
+          <h3>All events <span className="caption panel-count">{uniqueEvents.length}</span></h3>
           <div className="filter-pills">
             <button type="button" className={`pill ${filter === 'ALL' ? 'active' : ''}`} onClick={() => setFilter('ALL')}>All</button>
             {METHOD_ORDER.filter(m => methodTotals[m].count > 0).map(m => (
@@ -363,7 +363,7 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
               </button>
             ))}
             {newEventNames.size > 0 && (
-              <button type="button" className={`pill new ${filter === 'NEW' ? 'active' : ''}`} onClick={() => setFilter('NEW')}>
+              <button type="button" className={`pill ${filter === 'NEW' ? 'active' : ''}`} onClick={() => setFilter('NEW')}>
                 New only · {newEventNames.size}
               </button>
             )}
@@ -371,10 +371,10 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
         </div>
         <div className="events-table">
           <div className="events-table-head">
-            <span>Event</span><span>Method</span><span>Pages</span><span>Fires</span>
+            <span className="caption">Event</span><span className="caption">Method</span><span className="caption">Pages</span><span className="caption">Fires</span>
           </div>
           {filteredEvents.length === 0 ? (
-            <p className="no-events-note">No events match this filter.</p>
+            <p className="caption no-events-note">No events match this filter.</p>
           ) : (
             filteredEvents.map(e => {
               const isOpen = expandedEventName === e.eventName;
@@ -394,14 +394,14 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
                       {e.methods[0] && <span className={`method-dot ${METHOD_COLOR_CLASS[e.methods[0]]}`} />}
                       {e.methods.map(m => METHOD_LABELS[m]).join(', ')}
                     </span>
-                    <span>{e.pageCount}</span>
-                    <span className="events-table-fires">{e.totalCount}</span>
+                    <span className="tabular events-table-pages">{e.pageCount}</span>
+                    <span className="tabular events-table-fires">{e.totalCount}</span>
                   </button>
                   {isOpen && (
                     <div className="events-table-detail">
                       <EventDetails rawPayload={e.samplePayload} />
                       <div className="events-table-where">
-                        <div className="events-table-where-label">Where it fired</div>
+                        <div className="caption">Where it fired</div>
                         <div className="action-badges">
                           {e.pageUrls.slice(0, 6).map(url => (
                             <span key={url} className="badge" title={url}>{shortenPath(url)}</span>

@@ -145,7 +145,7 @@ export default function ScanForm({
   return (
     <form onSubmit={handleSubmit} className="form-container">
       <div className="field-group">
-        <label>Target URL</label>
+        <label className="label">Target URL</label>
         <input
           type="url"
           value={targetUrl}
@@ -155,28 +155,30 @@ export default function ScanForm({
         />
       </div>
 
-      <label className="checkbox-field">
-        <input
-          type="checkbox"
-          checked={manualLogin}
-          onChange={e => setManualLogin(e.target.checked)}
-        />
-        Manual login before scanning
-      </label>
-      <p className="field-hint">
-        Opens a visible browser window and pauses there for you to log in by hand before the automated
-        scan starts. Requires the backend to run locally on a machine with a desktop display - it will not
-        work on a headless server.
-      </p>
+      <div>
+        <label className="checkbox-field">
+          <input
+            type="checkbox"
+            checked={manualLogin}
+            onChange={e => setManualLogin(e.target.checked)}
+          />
+          Manual login before scanning
+        </label>
+        <p className="body-sm field-hint">
+          Opens a visible browser window and pauses there for you to log in by hand before the automated
+          scan starts. Requires the backend to run locally on a machine with a desktop display - it will not
+          work on a headless server.
+        </p>
+      </div>
 
       {awaitingLogin && (
         <div className="awaiting-login-banner">
-          <h3>Waiting for you to log in</h3>
-          <p>
+          <h5>Waiting for you to log in</h5>
+          <p className="body-sm">
             A browser window has opened at <strong>{awaitingLogin.targetUrl}</strong>. Log in there, then come
             back and press Continue. This session will be closed automatically if not confirmed in time.
           </p>
-          <button type="button" onClick={handleConfirmLogin}>Continue scanning</button>
+          <button type="button" className="ink-action" onClick={handleConfirmLogin}>Continue scanning</button>
         </div>
       )}
 
@@ -187,7 +189,7 @@ export default function ScanForm({
       {advancedOpen && (
         <div className="advanced-options">
           <div className="field-group">
-            <label>Max depth</label>
+            <label className="label">Max depth</label>
             <input
               type="number"
               min={0}
@@ -197,7 +199,7 @@ export default function ScanForm({
             />
           </div>
           <div className="field-group">
-            <label>Max pages</label>
+            <label className="label">Max pages</label>
             <input
               type="number"
               min={1}
@@ -207,7 +209,7 @@ export default function ScanForm({
             />
           </div>
           <div className="field-group full-width">
-            <label>Expected events from your tracking plan (one per line, optional)</label>
+            <label className="label">Expected events from your tracking plan (one per line, optional)</label>
             <textarea
               rows={4}
               value={expectedEvents}
@@ -220,7 +222,7 @@ export default function ScanForm({
 
       <div className="form-actions">
         <div className="scan-button-group">
-          <button type="submit" disabled={!!awaitingLogin}>Run Quick Scan</button>
+          <button type="submit" className="primary-action" disabled={!!awaitingLogin}>Run Quick Scan</button>
           <span
             className="info-icon"
             tabIndex={0}
@@ -230,7 +232,7 @@ export default function ScanForm({
           </span>
         </div>
         <div className="scan-button-group">
-          <button type="button" className="secondary-action" onClick={handleFullTrackingClick} disabled={!!awaitingLogin}>
+          <button type="button" className="outline-action" onClick={handleFullTrackingClick} disabled={!!awaitingLogin}>
             Run Full Tracking
           </button>
           <span

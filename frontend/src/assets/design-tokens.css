@@ -1,0 +1,273 @@
+/* =========================================================
+   Magnusson Analytica — Design Tokens
+   Colors, Typography, Spacing, Radii, Shadows
+   ========================================================= */
+
+/* ---------- Webfonts ---------- */
+@font-face {
+  font-family: "Outfit";
+  src: url("fonts/Outfit-VariableFont_wght.ttf") format("truetype-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lora";
+  src: url("fonts/Lora-VariableFont_wght.ttf") format("truetype-variations");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lora";
+  src: url("fonts/Lora-Italic-VariableFont_wght.ttf") format("truetype-variations");
+  font-weight: 400 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ---------- Tokens ---------- */
+:root {
+  /* === Brand Core === */
+  --brand-ember:        #F3734F;   /* Primary accent, CTAs, the "M" mark */
+  --brand-ember-deep:   #D85A36;   /* Hover / pressed */
+  --brand-ember-soft:   #F8A285;   /* Tints, secondary accents */
+  --brand-ink:          #1A1A1A;   /* Near-black used on dark surfaces */
+  --brand-paper:        #F5F0E8;   /* Cream — the default light surface */
+
+  /* === Surfaces === */
+  --surface-paper:      #F5F0E8;   /* Page background, light */
+  --surface-paper-2:    #EDE6D8;   /* Sunken card / panel on cream */
+  --surface-card:       #FFFFFF;   /* Elevated card on cream */
+  --surface-ink:        #1A1A1A;   /* Page background, dark */
+  --surface-ink-2:      #242424;   /* Elevated card on dark */
+  --surface-ink-3:      #2E2E2E;   /* Sunken / hover on dark */
+
+  /* === Foreground (text + icons) === */
+  --fg-1:               #1A1A1A;   /* Primary on light */
+  --fg-2:               #4A4944;   /* Secondary on light */
+  --fg-3:               #807C72;   /* Muted on light */
+  --fg-4:               #B8B2A4;   /* Disabled / hairline label on light */
+  --fg-on-ink-1:        #F5F0E8;   /* Primary on dark */
+  --fg-on-ink-2:        #C9C2B4;   /* Secondary on dark */
+  --fg-on-ink-3:        #8A867C;   /* Muted on dark */
+  --fg-on-ember:        #1A1A1A;   /* Text on the orange — ink, not white */
+
+  /* === Borders / hairlines === */
+  --border-1:           rgba(26, 26, 26, 0.10); /* Default on light */
+  --border-2:           rgba(26, 26, 26, 0.18); /* Strong on light */
+  --border-on-ink-1:    rgba(245, 240, 232, 0.10);
+  --border-on-ink-2:    rgba(245, 240, 232, 0.18);
+
+  /* === Semantic === */
+  --semantic-positive:  #4F7A52;   /* Muted forest — growth */
+  --semantic-warning:   #C99A2E;   /* Mustard — caution */
+  --semantic-negative:  #B14A3A;   /* Rust — alerts (kept warm-family) */
+  --semantic-info:      #3F6E84;   /* Slate teal — neutral data */
+
+  /* === Data viz palette (warm-leaning, plays with ember) === */
+  --viz-1: #F3734F;  /* ember */
+  --viz-2: #1A1A1A;  /* ink */
+  --viz-3: #C99A2E;  /* mustard */
+  --viz-4: #4F7A52;  /* forest */
+  --viz-5: #3F6E84;  /* slate teal */
+  --viz-6: #8A4F7D;  /* plum */
+  --viz-7: #F8A285;  /* ember tint */
+
+  /* === Type families === */
+  --font-display:  "Outfit", "Helvetica Neue", Arial, sans-serif;
+  --font-sans:     "Outfit", "Helvetica Neue", Arial, sans-serif;
+  --font-serif:    "Lora", "Iowan Old Style", Georgia, serif;
+
+  /* === Type scale (1.250 — major third) === */
+  --fs-12: 0.75rem;     /* 12 — micro / eyebrow */
+  --fs-14: 0.875rem;    /* 14 — small / caption */
+  --fs-16: 1rem;        /* 16 — body */
+  --fs-18: 1.125rem;    /* 18 — body large */
+  --fs-20: 1.25rem;     /* 20 — lead */
+  --fs-24: 1.5rem;      /* 24 — h5 */
+  --fs-30: 1.875rem;    /* 30 — h4 */
+  --fs-36: 2.25rem;     /* 36 — h3 */
+  --fs-48: 3rem;        /* 48 — h2 */
+  --fs-60: 3.75rem;     /* 60 — h1 */
+  --fs-80: 5rem;        /* 80 — display */
+
+  --lh-tight:   1.05; /* @kind other */
+  --lh-snug:    1.15; /* @kind other */
+  --lh-normal:  1.45; /* @kind other */
+  --lh-relaxed: 1.65; /* @kind other */
+
+  --ls-tight:   -0.02em; /* @kind other */
+  --ls-snug:    -0.01em; /* @kind other */
+  --ls-normal:  0; /* @kind other */
+  --ls-wide:    0.04em;
+  --ls-eyebrow: 0.14em;   /* Uppercase eyebrows */
+
+  /* === Spacing (4px base) === */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+  --sp-24: 96px;
+  --sp-32: 128px;
+
+  /* === Radii — restrained. Magnusson is a serious analytics brand. === */
+  --r-xs:    2px;
+  --r-sm:    4px;
+  --r-md:    6px;
+  --r-lg:    10px;
+  --r-xl:    16px;
+  --r-pill:  999px;
+
+  /* === Shadows — soft, warm-tinted (cream paper feel) === */
+  --shadow-1: 0 1px 2px rgba(26, 26, 26, 0.06);
+  --shadow-2: 0 2px 8px rgba(26, 26, 26, 0.08), 0 1px 2px rgba(26, 26, 26, 0.04);
+  --shadow-3: 0 8px 24px rgba(26, 26, 26, 0.10), 0 2px 4px rgba(26, 26, 26, 0.04);
+  --shadow-4: 0 20px 48px rgba(26, 26, 26, 0.14), 0 4px 8px rgba(26, 26, 26, 0.06);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+
+  --ease-out:   cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* @kind other */
+  --dur-fast:   140ms; /* @kind other */
+  --dur-base:   220ms; /* @kind other */
+  --dur-slow:   420ms; /* @kind other */
+}
+
+/* ---------- Semantic / role-based type classes ---------- */
+.eyebrow,
+[data-role="eyebrow"] {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-12);
+  letter-spacing: var(--ls-normal);
+  text-transform: capitalize;
+  color: var(--brand-ember);
+}
+
+.display,
+h1.display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(var(--fs-48), 6vw, var(--fs-80));
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  color: var(--fg-1);
+}
+
+h1, .h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-60);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  color: var(--fg-1);
+}
+
+h2, .h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-48);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-tight);
+  color: var(--fg-1);
+}
+
+h3, .h3 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-36);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-snug);
+  color: var(--fg-1);
+}
+
+h4, .h4 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-24);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-snug);
+  color: var(--fg-1);
+}
+
+h5, .h5 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-20);
+  line-height: var(--lh-snug);
+  color: var(--fg-1);
+}
+
+/* Editorial / pull-quote serif heading */
+.serif-display {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-style: italic;
+  font-size: var(--fs-48);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-snug);
+  color: var(--fg-1);
+}
+
+p, .body {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: var(--fs-18);
+  line-height: var(--lh-relaxed);
+  color: var(--fg-2);
+}
+
+.body-sm {
+  font-family: var(--font-serif);
+  font-size: var(--fs-16);
+  line-height: var(--lh-relaxed);
+  color: var(--fg-2);
+}
+
+.lead {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: var(--fs-24);
+  line-height: var(--lh-relaxed);
+  color: var(--fg-2);
+}
+
+.caption,
+small {
+  font-family: var(--font-display);
+  font-size: var(--fs-12);
+  line-height: var(--lh-normal);
+  color: var(--fg-3);
+  letter-spacing: var(--ls-snug);
+}
+
+.label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-14);
+  line-height: var(--lh-normal);
+  color: var(--fg-1);
+}
+
+code, .mono {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.92em;
+  background: var(--surface-paper-2);
+  padding: 2px 6px;
+  border-radius: var(--r-sm);
+  color: var(--fg-1);
+}
+
+/* Numerals — tabular for data tables */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

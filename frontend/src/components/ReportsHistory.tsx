@@ -53,6 +53,7 @@ export default function ReportsHistory({ openFileName, onOpened, onRerun }: Repo
   return (
     <div>
       <header>
+        <div className="eyebrow">Reports</div>
         <h1>Reports</h1>
         <p>Every completed scan is saved automatically. Click one to view it again.</p>
       </header>
@@ -72,11 +73,11 @@ export default function ReportsHistory({ openFileName, onOpened, onRerun }: Repo
             >
               <div className="report-row-main">
                 <span className="report-row-url">{report.targetUrl}</span>
-                <span className="report-row-date">
+                <span className="caption">
                   {report.finishedAt ? new Date(report.finishedAt).toLocaleString() : 'unknown date'}
                 </span>
               </div>
-              <span className="report-row-meta">
+              <span className="caption">
                 {report.pagesVisited ?? 0} page(s) &middot; {report.totalEvents ?? 0} event(s)
               </span>
             </button>

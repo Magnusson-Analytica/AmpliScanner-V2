@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { listSavedReports, SavedReportSummary } from '../api';
-import logo from '../assets/magnusson-logo.webp';
+import logo from '../assets/logo-mark-dark.png';
 
 export type Tab = 'scan' | 'reports';
 
@@ -43,8 +43,13 @@ export default function AppSidebar({ activeTab, onTabChange, onOpenReport, refre
   return (
     <nav className="sidebar">
       <div className="sidebar-brand">
-        <img src={logo} alt="Magnusson Analytica" className="sidebar-brand-mark" />
-        <span className="sidebar-brand-name">AmpliScanner</span>
+        <div className="sidebar-brand-row">
+          <img src={logo} alt="Magnusson Analytica" className="sidebar-brand-mark" />
+          <span className="sidebar-brand-word">
+            magnusson<span className="sidebar-brand-dot">.</span>
+          </span>
+        </div>
+        <span className="sidebar-brand-sub">AmpliScanner</span>
       </div>
 
       <div className="sidebar-nav">
@@ -66,7 +71,7 @@ export default function AppSidebar({ activeTab, onTabChange, onOpenReport, refre
 
       {recent.length > 0 && (
         <div className="sidebar-recent">
-          <div className="sidebar-recent-label">Recent</div>
+          <span className="caption sidebar-recent-label">Recent</span>
           <div className="sidebar-recent-items">
             {recent.map((report, i) => (
               <button
@@ -75,10 +80,10 @@ export default function AppSidebar({ activeTab, onTabChange, onOpenReport, refre
                 key={report.fileName ?? i}
                 onClick={() => report.fileName && onOpenReport(report.fileName)}
               >
-                <div className="sidebar-recent-host">{hostOf(report.targetUrl)}</div>
-                <div className="sidebar-recent-meta">
+                <span className="sidebar-recent-host">{hostOf(report.targetUrl)}</span>
+                <span className="caption sidebar-recent-meta">
                   {relativeDate(report.finishedAt)} &middot; {report.totalEvents ?? 0} events
-                </div>
+                </span>
               </button>
             ))}
           </div>
