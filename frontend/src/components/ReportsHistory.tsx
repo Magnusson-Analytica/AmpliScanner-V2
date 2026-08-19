@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { listSavedReports, getSavedReport, SavedReportSummary, DiscoveryRunResult } from '../api';
 import ResultsView from './ResultsView';
+import { LockIcon } from './icons';
 
 interface ReportsHistoryProps {
   openFileName?: string | null;
@@ -72,7 +73,17 @@ export default function ReportsHistory({ openFileName, onOpened, onRerun }: Repo
               onClick={() => openReport(report.fileName)}
             >
               <div className="report-row-main">
-                <span className="report-row-url">{report.targetUrl}</span>
+                <span className="report-row-url">
+                  {report.targetUrl}
+                  {report.exhaustive !== undefined && (
+                    <span className="badge scan-type small">{report.exhaustive ? 'Full Tracking' : 'Quick Scan'}</span>
+                  )}
+                  {report.manualLogin && (
+                    <span className="badge behind-login small" title="Ran against an authenticated session (manual login before scanning)">
+                      <LockIcon size={11} /> Behind login
+                    </span>
+                  )}
+                </span>
                 <span className="caption">
                   {report.finishedAt ? new Date(report.finishedAt).toLocaleString() : 'unknown date'}
                 </span>

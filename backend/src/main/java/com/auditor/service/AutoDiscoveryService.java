@@ -5,11 +5,14 @@ import com.auditor.model.ActionAttempt;
 import com.auditor.model.CapturedEvent;
 import com.auditor.model.DiscoveryRunRequest;
 import com.auditor.model.DiscoveryRunResult;
+import com.auditor.model.EvidenceLine;
 import com.auditor.model.PageVisitResult;
 import com.auditor.model.ScanProgress;
 import com.auditor.model.ScanStatus;
+import com.auditor.model.ScorecardVerdict;
 import com.auditor.model.SmartActionDefinition;
 import com.auditor.model.TrackingPlanCoverage;
+import com.auditor.model.UseCaseFinding;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,6 +34,7 @@ import java.net.URL;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -39,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -262,7 +267,432 @@ public class AutoDiscoveryService {
         result.setEffectiveMaxDepth(effectiveMaxDepth);
         result.setEffectiveMaxPages(effectiveMaxPages);
         result.setExhaustive(request.isExhaustive());
+        result.setManualLogin(request.isManualLogin());
+        List<UseCaseFinding> scorecard = computeScorecard(allEvents);
+        result.setScorecard(scorecard);
+        result.setScorecardVerdict(computeVerdict(scorecard, allEvents));
         return result;
+    }
+
+    // ---- V1 diagnostic scorecard: autocapture-only, naming hygiene, legacy SDK lockout ----
+
+    private static final Set<String> URL_CONCEPT_SYNONYMS = Set.of(
+            "url", "href", "path", "location", "domain",
+            "pageurl", "pagelocation", "pagepath", "pagedomain");
+
+    private static final Set<String> GENERIC_EVENT_NAMES = Set.of(
+            "button clicked", "click", "cta clicked", "form submitted", "link clicked");
+
+    private static final int SEVERITY_RANK_HIGH = 3;
+    private static final int SEVERITY_RANK_MEDIUM = 2;
+    private static final int SEVERITY_RANK_LOW = 1;
+    private static final int SEVERITY_RANK_NONE = 0;
+
+    // Below this many distinct event names, findings are real but too thin a sample to be definitive -
+    // the verdict carries a confidence note instead of overclaiming.
+    private static final int THIN_SAMPLE_DISTINCT_EVENT_THRESHOLD = 5;
+
+    private List<UseCaseFinding> computeScorecard(List<CapturedEvent> events) {
+        List<UseCaseFinding> findings = new ArrayList<>(List.of(
+                computeAutocaptureOnlyFinding(events),
+                computeNamingHygieneFinding(events),
+                computeLegacySdkFinding(events)));
+        // Most severe FOUND first, then CLEAR items, so attention lands on what needs action.
+        findings.sort(Comparator.comparingInt(
+                (UseCaseFinding f) -> f.isTriggered() ? severityRank(f.getSeverity()) : -1).reversed());
+        return findings;
+    }
+
+    // Regular ("+s") pluralization is all every noun in the scorecard needs - "1 issue" / "2 issues",
+    // "1 event" / "2 events", etc. Returns "{count} {noun}" or "{count} {noun}s".
+    private String pluralize(long count, String noun) {
+        return count + " " + noun + (count == 1 ? "" : "s");
+    }
+
+    private int severityRank(String severity) {
+        if (severity == null) {
+            return SEVERITY_RANK_NONE;
+        }
+        return switch (severity) {
+            case "HIGH" -> SEVERITY_RANK_HIGH;
+            case "MEDIUM" -> SEVERITY_RANK_MEDIUM;
+            case "LOW" -> SEVERITY_RANK_LOW;
+            default -> SEVERITY_RANK_NONE;
+        };
+    }
+
+    private ScorecardVerdict computeVerdict(List<UseCaseFinding> findings, List<CapturedEvent> events) {
+        long foundCount = findings.stream().filter(UseCaseFinding::isTriggered).count();
+        int worstRank = findings.stream()
+                .filter(UseCaseFinding::isTriggered)
+                .mapToInt(f -> severityRank(f.getSeverity()))
+                .max()
+                .orElse(SEVERITY_RANK_NONE);
+
+        String band;
+        String label;
+        String summary;
+        if (foundCount == 0) {
+            band = "READY";
+            label = "Ready";
+            summary = "No diagnostic issues found in this scan.";
+        } else if (worstRank >= SEVERITY_RANK_HIGH) {
+            band = "NOT_READY";
+            label = "Not ready";
+            summary = pluralize(foundCount, "issue") + " found, including at least one high-severity gap.";
+        } else {
+            band = "PARTIALLY_READY";
+            label = "Partially ready";
+            summary = pluralize(foundCount, "issue") + " found, but nothing severe.";
+        }
+
+        Set<String> distinctEventNames = new HashSet<>();
+        for (CapturedEvent event : events) {
+            distinctEventNames.add(event.getEventName() != null ? event.getEventName() : "(unnamed event)");
+        }
+        String confidenceNote = distinctEventNames.size() < THIN_SAMPLE_DISTINCT_EVENT_THRESHOLD
+                ? "This scan captured only " + pluralize(distinctEventNames.size(), "distinct event name")
+                        + " - treat these findings as directional, not definitive."
+                : null;
+
+        return new ScorecardVerdict(band, label, summary, confidenceNote);
+    }
+
+    private UseCaseFinding computeAutocaptureOnlyFinding(List<CapturedEvent> events) {
+        Set<String> autocaptureNames = new TreeSet<>();
+        Set<String> customNames = new TreeSet<>();
+        for (CapturedEvent event : events) {
+            String name = event.getEventName() != null ? event.getEventName() : "(unnamed event)";
+            if ("AUTOCAPTURE".equals(event.getTrackingMethod())) {
+                autocaptureNames.add(name);
+            } else {
+                customNames.add(name);
+            }
+        }
+
+        boolean triggered = !autocaptureNames.isEmpty() && customNames.isEmpty();
+        String severity = triggered ? "HIGH" : null;
+        String summary = triggered
+                ? "Amplitude is only capturing default autocapture events - nothing here can answer a specific "
+                        + "product question."
+                : "Custom instrumentation is present alongside autocapture.";
+        String consequence = triggered
+                ? "Autocapture alone can't be attributed to a specific product action - there's no custom event "
+                        + "here to tie to a conversion, a feature, or a funnel step."
+                : null;
+        String nextStep = triggered
+                ? "Instrument custom events for the specific user actions and flows you actually want to analyze."
+                : null;
+
+        List<EvidenceLine> evidence = new ArrayList<>();
+        if (!autocaptureNames.isEmpty() || !customNames.isEmpty()) {
+            evidence.add(new EvidenceLine(
+                    pluralize(autocaptureNames.size(), "autocapture event") + ", "
+                            + pluralize(customNames.size(), "custom/DataLayer event") + " observed.",
+                    List.of()));
+        } else {
+            evidence.add(new EvidenceLine("No events were captured during this scan.", List.of()));
+        }
+        return new UseCaseFinding("AUTOCAPTURE_ONLY", "Autocapture-only implementation", triggered, severity,
+                summary, consequence, nextStep, evidence);
+    }
+
+    private UseCaseFinding computeNamingHygieneFinding(List<CapturedEvent> events) {
+        // Keys grouped by the event name they appeared on, so deviation can be measured per-event
+        // ("3 of 6 custom events deviate"), not just as one global bag of keys.
+        Map<String, Set<String>> keysByEventName = new LinkedHashMap<>();
+        for (CapturedEvent event : events) {
+            if ("AUTOCAPTURE".equals(event.getTrackingMethod())) {
+                continue;
+            }
+            String name = event.getEventName() != null ? event.getEventName() : "(unnamed event)";
+            Set<String> keys = collectCustomPropertyKeys(event.getRawPayload());
+            if (!keys.isEmpty()) {
+                keysByEventName.computeIfAbsent(name, k -> new LinkedHashSet<>()).addAll(keys);
+            }
+        }
+
+        Set<String> allKeys = new LinkedHashSet<>();
+        keysByEventName.values().forEach(allKeys::addAll);
+
+        Map<String, Set<String>> keysByStyle = new LinkedHashMap<>();
+        for (String key : allKeys) {
+            String style = classifyKeyStyle(key);
+            if (style != null) {
+                keysByStyle.computeIfAbsent(style, s -> new LinkedHashSet<>()).add(key);
+            }
+        }
+        String dominantStyle = keysByStyle.entrySet().stream()
+                .max(Comparator.comparingInt(e -> e.getValue().size()))
+                .map(Map.Entry::getKey)
+                .orElse(null);
+
+        Set<String> deviatingEventNames = new TreeSet<>();
+        if (dominantStyle != null) {
+            keysByEventName.forEach((eventName, keys) -> {
+                for (String key : keys) {
+                    String style = classifyKeyStyle(key);
+                    if (style != null && !style.equals(dominantStyle)) {
+                        deviatingEventNames.add(eventName);
+                        break;
+                    }
+                }
+            });
+        }
+
+        Set<String> urlVariants = new TreeSet<>();
+        keysByEventName.forEach((eventName, keys) -> {
+            for (String key : keys) {
+                if (URL_CONCEPT_SYNONYMS.contains(normalizeKey(key))) {
+                    urlVariants.add(key);
+                }
+            }
+        });
+
+        Set<String> genericNames = new TreeSet<>();
+        for (CapturedEvent event : events) {
+            if ("AUTOCAPTURE".equals(event.getTrackingMethod())) {
+                continue;
+            }
+            String name = event.getEventName();
+            if (name != null && GENERIC_EVENT_NAMES.contains(name.toLowerCase(java.util.Locale.ROOT))) {
+                genericNames.add(name);
+            }
+        }
+
+        boolean styleIssue = keysByStyle.size() > 1 && !deviatingEventNames.isEmpty();
+        boolean conceptDriftIssue = urlVariants.size() > 1;
+        boolean genericNameIssue = !genericNames.isEmpty();
+        boolean triggered = styleIssue || conceptDriftIssue || genericNameIssue;
+
+        double deviationRatio = keysByEventName.isEmpty() ? 0
+                : deviatingEventNames.size() / (double) keysByEventName.size();
+
+        String severity = null;
+        if (triggered) {
+            int score = 0;
+            if (deviationRatio >= 0.5) {
+                score += 2;
+            } else if (deviationRatio > 0) {
+                score += 1;
+            }
+            if (urlVariants.size() >= 4) {
+                score += 2;
+            } else if (urlVariants.size() >= 2) {
+                score += 1;
+            }
+            if (genericNames.size() >= 2) {
+                score += 2;
+            } else if (genericNames.size() == 1) {
+                score += 1;
+            }
+            severity = score >= 4 ? "HIGH" : score >= 2 ? "MEDIUM" : "LOW";
+        }
+
+        String summary = triggered
+                ? "Custom events exist, but naming is inconsistent enough that neither people nor AI can trust it."
+                : "Property keys and event names follow a consistent naming convention.";
+        String consequence = triggered ? "Amplitude's AI will merge or miss these events when queried." : null;
+        String nextStep = triggered
+                ? "Standardize on one property-naming convention and one name per concept before layering AI "
+                        + "analysis on top of this data."
+                : null;
+
+        // All three sub-signals always get their own line, whether or not each one is actually an issue -
+        // otherwise a clean result on just one of them silently drops that row, reading as if the check
+        // for it had been removed rather than simply finding nothing.
+        List<EvidenceLine> evidence = new ArrayList<>();
+
+        if (styleIssue) {
+            List<String> terms = new ArrayList<>();
+            keysByStyle.forEach((style, keys) -> keys.stream().limit(2)
+                    .forEach(key -> terms.add(key + " (" + style + ")")));
+            evidence.add(new EvidenceLine(
+                    deviatingEventNames.size() + " of " + pluralize(keysByEventName.size(), "custom event")
+                            + " deviate from the dominant \"" + dominantStyle + "\" key convention.",
+                    terms));
+        } else if (keysByEventName.isEmpty()) {
+            evidence.add(new EvidenceLine("No custom property keys were available to check for casing.", List.of()));
+        } else {
+            evidence.add(new EvidenceLine(
+                    "Property keys consistently use one naming style"
+                            + (dominantStyle != null ? " (" + dominantStyle + ")." : "."),
+                    List.of()));
+        }
+
+        if (conceptDriftIssue) {
+            // Counts property KEYS, not events - one event can carry more than one variant, so "N keys
+            // across M events" can have N > M without being self-contradictory. Keep the sentence about
+            // keys only, since that's what "different names" actually refers to.
+            evidence.add(new EvidenceLine(
+                    "1 concept referred to by " + pluralize(urlVariants.size(), "different property key") + ".",
+                    new ArrayList<>(urlVariants)));
+        } else {
+            evidence.add(new EvidenceLine("No concept found spelled differently across events.", List.of()));
+        }
+
+        if (genericNameIssue) {
+            evidence.add(new EvidenceLine(
+                    pluralize(genericNames.size(), "generic event name") + " with nothing to tell instances apart.",
+                    new ArrayList<>(genericNames)));
+        } else {
+            evidence.add(new EvidenceLine("No generic event names found.", List.of()));
+        }
+
+        return new UseCaseFinding("NAMING_HYGIENE", "Custom events with inconsistent naming hygiene", triggered,
+                severity, summary, consequence, nextStep, evidence);
+    }
+
+    private UseCaseFinding computeLegacySdkFinding(List<CapturedEvent> events) {
+        Set<String> legacyLibraries = new TreeSet<>();
+        Set<String> currentLibraries = new TreeSet<>();
+        int legacyEventCount = 0;
+        int currentEventCount = 0;
+
+        for (CapturedEvent event : events) {
+            String[] library = extractLibrary(event.getRawPayload());
+            if (library == null) {
+                continue;
+            }
+            String name = library[0];
+            String version = library[1];
+            String label = version != null ? name + " " + version : name;
+            if (name.equalsIgnoreCase("amplitude-js")) {
+                legacyLibraries.add(label);
+                legacyEventCount++;
+            } else if (name.toLowerCase(java.util.Locale.ROOT).startsWith("amplitude-ts")) {
+                currentLibraries.add(label);
+                currentEventCount++;
+            }
+        }
+
+        boolean triggered = !legacyLibraries.isEmpty();
+        String severity = null;
+        String summary;
+        String consequence = null;
+        String nextStep = null;
+        List<EvidenceLine> evidence = new ArrayList<>();
+
+        if (triggered) {
+            double legacyRatio = (legacyEventCount + currentEventCount) > 0
+                    ? legacyEventCount / (double) (legacyEventCount + currentEventCount)
+                    : 1.0;
+            severity = legacyRatio >= 0.7 ? "HIGH" : legacyRatio >= 0.3 ? "MEDIUM" : "LOW";
+            summary = "Some traffic is still on the legacy SDK, which is locked out of newer autocapture, "
+                    + "Session Replay, and AI features.";
+            consequence = "Amplitude's AI roadmap is being built around the current SDK's capabilities - by 2027, "
+                    + "staying on the legacy SDK means missing autocapture, Session Replay, and whatever AI "
+                    + "features ship on top of them.";
+            nextStep = "Migrate the legacy integration to the current SDK (amplitude-ts / "
+                    + "@amplitude/analytics-browser) before those capabilities become the baseline.";
+            evidence.add(new EvidenceLine(
+                    legacyEventCount + " of "
+                            + pluralize(legacyEventCount + currentEventCount, "SDK-attributed event")
+                            + " came from the legacy SDK.",
+                    new ArrayList<>(legacyLibraries)));
+            if (!currentLibraries.isEmpty()) {
+                evidence.add(new EvidenceLine("Also observed on the current SDK.", new ArrayList<>(currentLibraries)));
+            }
+        } else if (!currentLibraries.isEmpty()) {
+            summary = "All observed events came from the current SDK.";
+            evidence.add(new EvidenceLine("Current SDK confirmed.", new ArrayList<>(currentLibraries)));
+        } else {
+            summary = "Could not determine the SDK version from the captured events.";
+            evidence.add(new EvidenceLine(summary, List.of()));
+        }
+
+        return new UseCaseFinding("LEGACY_SDK", "Legacy SDK / capability lockout", triggered, severity, summary,
+                consequence, nextStep, evidence);
+    }
+
+    private Set<String> collectCustomPropertyKeys(String rawPayload) {
+        Set<String> out = new LinkedHashSet<>();
+        if (rawPayload == null || rawPayload.isBlank()) {
+            return out;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(rawPayload);
+            for (String field : new String[] {"event_properties", "user_properties"}) {
+                JsonNode props = root.get(field);
+                if (props != null && props.isObject()) {
+                    collectPropertyKeysFromObject(props, out);
+                }
+            }
+        } catch (Exception e) {
+            // malformed/unexpected payload shape - skip it for this analysis
+        }
+        return out;
+    }
+
+    // Amplitude system properties ("[Amplitude] ...") aren't something the customer named, so they're
+    // skipped. Identify-API operation wrappers ("$set", "$setOnce", "$add", ...) aren't property names
+    // either - they're recursed into once, since the actual customer-defined keys live one level down
+    // (e.g. user_properties.$setOnce.initial_utm_campaign).
+    private void collectPropertyKeysFromObject(JsonNode props, Set<String> out) {
+        props.fields().forEachRemaining(entry -> {
+            String key = entry.getKey();
+            if (key.startsWith("[")) {
+                return;
+            }
+            if (key.startsWith("$")) {
+                if (entry.getValue().isObject()) {
+                    collectPropertyKeysFromObject(entry.getValue(), out);
+                }
+                return;
+            }
+            out.add(key);
+        });
+    }
+
+    private String[] extractLibrary(String rawPayload) {
+        if (rawPayload == null || rawPayload.isBlank()) {
+            return null;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(rawPayload);
+            JsonNode library = root.get("library");
+            if (library == null) {
+                return null;
+            }
+            if (library.isTextual()) {
+                String text = library.asText();
+                int slash = text.indexOf('/');
+                return slash > 0 ? new String[] {text.substring(0, slash), text.substring(slash + 1)}
+                        : new String[] {text, null};
+            }
+            if (library.isObject()) {
+                String name = library.has("name") ? library.get("name").asText() : null;
+                String version = library.has("version") ? library.get("version").asText() : null;
+                return name != null ? new String[] {name, version} : null;
+            }
+        } catch (Exception e) {
+            // malformed/unexpected payload shape - skip it for this analysis
+        }
+        return null;
+    }
+
+    // Returns null for a single lowercase word - too ambiguous on its own to call a "style".
+    private String classifyKeyStyle(String key) {
+        if (key.contains(" ")) {
+            return "spaced";
+        }
+        if (key.contains("_")) {
+            return "snake_case";
+        }
+        if (key.matches("^[a-z]+[A-Z][A-Za-z0-9]*$")) {
+            return "camelCase";
+        }
+        if (key.matches("^[A-Z][A-Za-z0-9]*$")) {
+            return "PascalCase";
+        }
+        if (key.matches("^[a-z]+$")) {
+            return null;
+        }
+        return "other";
+    }
+
+    private String normalizeKey(String key) {
+        return key.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z]", "");
     }
 
     private TrackingPlanCoverage computeTrackingPlanCoverage(List<String> expectedEventNames, List<CapturedEvent> capturedEvents) {

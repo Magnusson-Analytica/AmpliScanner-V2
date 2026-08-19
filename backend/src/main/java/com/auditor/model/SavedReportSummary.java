@@ -9,18 +9,22 @@ public class SavedReportSummary {
     private Instant finishedAt;
     private int pagesVisited;
     private int totalEvents;
+    private boolean manualLogin;
+    private boolean exhaustive;
 
     public SavedReportSummary() {
     }
 
     public SavedReportSummary(String fileName, String targetUrl, Instant startedAt, Instant finishedAt,
-                               int pagesVisited, int totalEvents) {
+                               int pagesVisited, int totalEvents, boolean manualLogin, boolean exhaustive) {
         this.fileName = fileName;
         this.targetUrl = targetUrl;
         this.startedAt = startedAt;
         this.finishedAt = finishedAt;
         this.pagesVisited = pagesVisited;
         this.totalEvents = totalEvents;
+        this.manualLogin = manualLogin;
+        this.exhaustive = exhaustive;
     }
 
     public String getFileName() {
@@ -69,5 +73,21 @@ public class SavedReportSummary {
 
     public void setTotalEvents(int totalEvents) {
         this.totalEvents = totalEvents;
+    }
+
+    public boolean isManualLogin() {
+        return manualLogin;
+    }
+
+    public void setManualLogin(boolean manualLogin) {
+        this.manualLogin = manualLogin;
+    }
+
+    public boolean isExhaustive() {
+        return exhaustive;
+    }
+
+    public void setExhaustive(boolean exhaustive) {
+        this.exhaustive = exhaustive;
     }
 }

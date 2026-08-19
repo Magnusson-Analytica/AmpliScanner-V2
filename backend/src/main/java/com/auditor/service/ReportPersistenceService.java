@@ -84,7 +84,9 @@ public class ReportPersistenceService {
                             result.getStartedAt(),
                             result.getFinishedAt(),
                             result.getPagesVisited() != null ? result.getPagesVisited().size() : 0,
-                            result.getAllCapturedAmplitudeEvents() != null ? result.getAllCapturedAmplitudeEvents().size() : 0));
+                            result.getAllCapturedAmplitudeEvents() != null ? result.getAllCapturedAmplitudeEvents().size() : 0,
+                            result.isManualLogin(),
+                            result.isExhaustive()));
                 } catch (IOException e) {
                     log.warn("Skipping unreadable saved report {}: {}", file.getFileName(), e.getMessage());
                 }

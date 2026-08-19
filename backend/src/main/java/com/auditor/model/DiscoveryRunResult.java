@@ -15,6 +15,9 @@ public class DiscoveryRunResult {
     private int effectiveMaxDepth;
     private int effectiveMaxPages;
     private boolean exhaustive;
+    private boolean manualLogin;
+    private List<UseCaseFinding> scorecard;
+    private ScorecardVerdict scorecardVerdict;
 
     public String getRunId() {
         return runId;
@@ -102,5 +105,29 @@ public class DiscoveryRunResult {
 
     public void setExhaustive(boolean exhaustive) {
         this.exhaustive = exhaustive;
+    }
+
+    public boolean isManualLogin() {
+        return manualLogin;
+    }
+
+    public void setManualLogin(boolean manualLogin) {
+        this.manualLogin = manualLogin;
+    }
+
+    public List<UseCaseFinding> getScorecard() {
+        return scorecard;
+    }
+
+    public void setScorecard(List<UseCaseFinding> scorecard) {
+        this.scorecard = scorecard;
+    }
+
+    public ScorecardVerdict getScorecardVerdict() {
+        return scorecardVerdict;
+    }
+
+    public void setScorecardVerdict(ScorecardVerdict scorecardVerdict) {
+        this.scorecardVerdict = scorecardVerdict;
     }
 }

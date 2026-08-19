@@ -42,6 +42,33 @@ export interface HistoricalComparison {
   disappearedEvents?: ComparisonEntry[];
 }
 
+export interface EvidenceLine {
+  text?: string;
+  terms?: string[];
+}
+
+export type FindingSeverity = 'HIGH' | 'MEDIUM' | 'LOW';
+
+export interface UseCaseFinding {
+  id?: string;
+  title?: string;
+  triggered?: boolean;
+  severity?: FindingSeverity | null;
+  summary?: string;
+  consequence?: string | null;
+  nextStep?: string | null;
+  evidence?: EvidenceLine[];
+}
+
+export type ScorecardBand = 'READY' | 'PARTIALLY_READY' | 'NOT_READY';
+
+export interface ScorecardVerdict {
+  band?: ScorecardBand;
+  label?: string;
+  summary?: string;
+  confidenceNote?: string | null;
+}
+
 export interface DiscoveryRunResult {
   runId?: string;
   targetUrl?: string;
@@ -54,6 +81,9 @@ export interface DiscoveryRunResult {
   effectiveMaxDepth?: number;
   effectiveMaxPages?: number;
   exhaustive?: boolean;
+  manualLogin?: boolean;
+  scorecard?: UseCaseFinding[];
+  scorecardVerdict?: ScorecardVerdict | null;
 }
 
 export interface DiscoveryRunRequest {
@@ -72,6 +102,8 @@ export interface SavedReportSummary {
   finishedAt?: string;
   pagesVisited?: number;
   totalEvents?: number;
+  manualLogin?: boolean;
+  exhaustive?: boolean;
 }
 
 export type ScanStatus = 'RUNNING' | 'COMPLETED' | 'FAILED' | 'AWAITING_LOGIN' | 'EXPIRED';

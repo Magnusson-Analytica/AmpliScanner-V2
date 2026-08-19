@@ -3,6 +3,7 @@ import {
   DiscoveryRunResult, TrackingMethod,
   buildUniqueEventsSummary, downloadResultAsCsv, downloadResultAsJson,
 } from '../api';
+import { LockIcon } from './icons';
 
 interface ResultsViewProps {
   result: DiscoveryRunResult;
@@ -187,8 +188,9 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
     }
   }
 
+  const scanTypeLabel = result.exhaustive !== undefined ? (result.exhaustive ? 'Full Tracking' : 'Quick Scan') : null;
+
   const headerParts = [
-    result.exhaustive !== undefined ? (result.exhaustive ? 'Full Tracking' : 'Quick Scan') : null,
     result.finishedAt ? new Date(result.finishedAt).toLocaleString() : null,
     formatDuration(result.startedAt, result.finishedAt),
   ].filter(Boolean);
@@ -212,6 +214,12 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
         <div>
           <div className="dashboard-header-meta">
             <span className="badge success">COMPLETED</span>
+            {scanTypeLabel && <span className="badge scan-type">{scanTypeLabel}</span>}
+            {result.manualLogin && (
+              <span className="badge behind-login" title="This scan ran against an authenticated session (manual login before scanning)">
+                <LockIcon /> Behind login
+              </span>
+            )}
             {headerParts.length > 0 && <span className="caption">{headerParts.join(' · ')}</span>}
           </div>
           <h1 className="dashboard-title">{result.targetUrl}</h1>
@@ -259,6 +267,74 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
           )}
         </div>
       </div>
+
+      {result.scorecard && result.scorecard.length > 0 && (
+        <div className="panel">
+          <div className="panel-header">
+            <h3>Diagnostic scorecard</h3>
+          </div>
+
+          {result.scorecardVerdict && (
+            <div className={`scorecard-verdict verdict-${(result.scorecardVerdict.band ?? 'ready').toLowerCase().replace(/_/g, '-')}`}>
+              <span className="scorecard-verdict-label">{result.scorecardVerdict.label}</span>
+              <span className="body-sm scorecard-verdict-summary">{result.scorecardVerdict.summary}</span>
+              {result.scorecardVerdict.confidenceNote && (
+                <span className="caption scorecard-confidence-note">{result.scorecardVerdict.confidenceNote}</span>
+              )}
+            </div>
+          )}
+
+          <div className="scorecard-list">
+            {result.scorecard.map(finding => finding.triggered ? (
+              <div
+                className={`scorecard-row flagged severity-${(finding.severity ?? 'low').toLowerCase()}`}
+                key={finding.id}
+              >
+                <div className="scorecard-row-header">
+                  <span className="badge fail">Found</span>
+                  {finding.severity && (
+                    <span className={`severity-badge severity-${finding.severity.toLowerCase()}`}>
+                      {finding.severity}
+                    </span>
+                  )}
+                  <span className="label">{finding.title}</span>
+                </div>
+                {finding.summary && <p className="body-sm scorecard-summary">{finding.summary}</p>}
+                {finding.consequence && (
+                  <p className="caption scorecard-callout">
+                    <strong>Why it matters: </strong>{finding.consequence}
+                  </p>
+                )}
+                {finding.nextStep && (
+                  <p className="caption scorecard-callout">
+                    <strong>Next step: </strong>{finding.nextStep}
+                  </p>
+                )}
+                <div className="scorecard-evidence">
+                  {(finding.evidence ?? []).map((line, i) => (
+                    <div className="scorecard-evidence-line" key={i}>
+                      <span className="caption scorecard-evidence-text">{line.text}</span>
+                      {line.terms && line.terms.length > 0 && (
+                        <div className="scorecard-terms">
+                          {line.terms.map((term, j) => (
+                            <code key={j}>{term}</code>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="scorecard-row-clear" key={finding.id}>
+                <span className="badge success">Clear</span>
+                <span className="label">{finding.title}</span>
+                {finding.summary && <span className="caption scorecard-clear-summary">{finding.summary}</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="dashboard-row">
         <div className="panel">
