@@ -28,6 +28,16 @@ const METHOD_COLOR_CLASS: Record<TrackingMethod, string> = {
 
 type EventFilter = 'ALL' | TrackingMethod | 'NEW';
 
+type ReportSection = 'verdict' | 'overview' | 'breakdown' | 'pages' | 'events';
+
+const REPORT_SECTIONS: { key: ReportSection; label: string }[] = [
+  { key: 'verdict', label: 'Diagnosis' },
+  { key: 'overview', label: 'Overview' },
+  { key: 'breakdown', label: 'Breakdown' },
+  { key: 'pages', label: 'Pages' },
+  { key: 'events', label: 'Events' },
+];
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -154,6 +164,9 @@ function shortenPath(url: string): string {
 export default function ResultsView({ result, onRerun }: ResultsViewProps) {
   const [expandedEventName, setExpandedEventName] = useState<string | null>(null);
   const [filter, setFilter] = useState<EventFilter>('ALL');
+  const [section, setSection] = useState<ReportSection>('verdict');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [groupBy, setGroupBy] = useState<'flat' | 'page'>('flat');
 
   const pages = result.pagesVisited ?? [];
   const uniqueEvents = buildUniqueEventsSummary(result);
@@ -202,10 +215,25 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
   const coverage = result.trackingPlanCoverage;
   const coveragePct = coverage && coverage.expectedCount ? Math.round(((coverage.observedCount ?? 0) / coverage.expectedCount) * 100) : 0;
 
-  const filteredEvents = uniqueEvents.filter(e => {
-    if (filter === 'ALL') return true;
-    if (filter === 'NEW') return newEventNames.has(e.eventName);
-    return e.methods.includes(filter);
+  const searchTerm = searchQuery.trim().toLowerCase();
+
+  const matchesFilter = (eventName: string, methods: TrackingMethod[]): boolean => {
+    if (filter === 'NEW') {
+      if (!newEventNames.has(eventName)) return false;
+    } else if (filter !== 'ALL' && !methods.includes(filter)) {
+      return false;
+    }
+    if (searchTerm && !eventName.toLowerCase().includes(searchTerm)) return false;
+    return true;
+  };
+
+  const filteredEvents = uniqueEvents.filter(e => matchesFilter(e.eventName, e.methods));
+
+  const pageGroups = pages.map(page => {
+    const totalOnPage = page.capturedEvents?.length ?? 0;
+    const visibleEvents = (page.capturedEvents ?? []).filter(ev =>
+      matchesFilter(ev.eventName ?? '(unnamed event)', [ev.trackingMethod ?? 'CUSTOM_SDK']));
+    return { page, totalOnPage, visibleEvents };
   });
 
   return (
@@ -235,6 +263,20 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
         </div>
       </div>
 
+      <nav className="section-nav">
+        {REPORT_SECTIONS.map(sec => (
+          <button
+            type="button"
+            key={sec.key}
+            className={`segmented-item ${section === sec.key ? 'active' : ''}`}
+            onClick={() => setSection(sec.key)}
+          >
+            {sec.label}
+          </button>
+        ))}
+      </nav>
+
+      <section style={{ display: section === 'overview' ? 'block' : 'none' }}>
       <div className="stat-tiles">
         <div className="stat-tile">
           <span className="caption stat-tile-label">Pages crawled</span>
@@ -267,7 +309,9 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
           )}
         </div>
       </div>
+      </section>
 
+      <section style={{ display: section === 'verdict' ? 'block' : 'none' }}>
       {result.scorecard && result.scorecard.length > 0 && (
         <div className="panel">
           <div className="panel-header">
@@ -335,7 +379,9 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
           </div>
         </div>
       )}
+      </section>
 
+      <section style={{ display: section === 'breakdown' ? 'block' : 'none' }}>
       <div className="dashboard-row">
         <div className="panel">
           <div className="panel-header">
@@ -390,7 +436,9 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
           </div>
         )}
       </div>
+      </section>
 
+      <section style={{ display: section === 'pages' ? 'block' : 'none' }}>
       <div className="panel">
         <div className="panel-header">
           <h3>Events per page</h3>
@@ -422,79 +470,154 @@ export default function ResultsView({ result, onRerun }: ResultsViewProps) {
           })}
         </div>
       </div>
+      </section>
 
+      <section style={{ display: section === 'events' ? 'block' : 'none' }}>
       <div className="panel events-panel">
         <div className="panel-header">
           <h3>All events <span className="caption panel-count">{uniqueEvents.length}</span></h3>
-          <div className="filter-pills">
-            <button type="button" className={`pill ${filter === 'ALL' ? 'active' : ''}`} onClick={() => setFilter('ALL')}>All</button>
-            {METHOD_ORDER.filter(m => methodTotals[m].count > 0).map(m => (
+          <div className="events-controls">
+            <input
+              type="text"
+              className="events-search"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search events"
+            />
+            <div className="group-toggle">
               <button
                 type="button"
-                key={m}
-                className={`pill ${filter === m ? 'active' : ''}`}
-                onClick={() => setFilter(m)}
+                className={`segmented-item ${groupBy === 'flat' ? 'active' : ''}`}
+                onClick={() => setGroupBy('flat')}
               >
-                {METHOD_LABELS[m]}
+                Flat list
               </button>
-            ))}
-            {newEventNames.size > 0 && (
-              <button type="button" className={`pill ${filter === 'NEW' ? 'active' : ''}`} onClick={() => setFilter('NEW')}>
-                New only · {newEventNames.size}
+              <button
+                type="button"
+                className={`segmented-item ${groupBy === 'page' ? 'active' : ''}`}
+                onClick={() => setGroupBy('page')}
+              >
+                By page
               </button>
-            )}
+            </div>
+            <div className="filter-pills">
+              <button type="button" className={`pill ${filter === 'ALL' ? 'active' : ''}`} onClick={() => setFilter('ALL')}>All</button>
+              {METHOD_ORDER.filter(m => methodTotals[m].count > 0).map(m => (
+                <button
+                  type="button"
+                  key={m}
+                  className={`pill ${filter === m ? 'active' : ''}`}
+                  onClick={() => setFilter(m)}
+                >
+                  {METHOD_LABELS[m]}
+                </button>
+              ))}
+              {newEventNames.size > 0 && (
+                <button type="button" className={`pill ${filter === 'NEW' ? 'active' : ''}`} onClick={() => setFilter('NEW')}>
+                  New only · {newEventNames.size}
+                </button>
+              )}
+            </div>
           </div>
         </div>
-        <div className="events-table">
-          <div className="events-table-head">
-            <span className="caption">Event</span><span className="caption">Method</span><span className="caption">Pages</span><span className="caption">Fires</span>
-          </div>
-          {filteredEvents.length === 0 ? (
-            <p className="caption no-events-note">No events match this filter.</p>
-          ) : (
-            filteredEvents.map(e => {
-              const isOpen = expandedEventName === e.eventName;
-              const isNew = newEventNames.has(e.eventName);
-              return (
-                <div className="events-table-row-wrap" key={e.eventName}>
-                  <button
-                    type="button"
-                    className="events-table-row"
-                    onClick={() => setExpandedEventName(isOpen ? null : e.eventName)}
-                  >
-                    <span className="events-table-name">
-                      {e.eventName}
-                      {isNew && <span className="badge success small">NEW</span>}
-                    </span>
-                    <span className="events-table-method">
-                      {e.methods[0] && <span className={`method-dot ${METHOD_COLOR_CLASS[e.methods[0]]}`} />}
-                      {e.methods.map(m => METHOD_LABELS[m]).join(', ')}
-                    </span>
-                    <span className="tabular events-table-pages">{e.pageCount}</span>
-                    <span className="tabular events-table-fires">{e.totalCount}</span>
-                  </button>
-                  {isOpen && (
-                    <div className="events-table-detail">
-                      <EventDetails rawPayload={e.samplePayload} />
-                      <div className="events-table-where">
-                        <div className="caption">Where it fired</div>
-                        <div className="action-badges">
-                          {e.pageUrls.slice(0, 6).map(url => (
-                            <span key={url} className="badge" title={url}>{shortenPath(url)}</span>
-                          ))}
-                          {e.pageUrls.length > 6 && (
-                            <span className="badge">+{e.pageUrls.length - 6} more</span>
-                          )}
+
+        {groupBy === 'flat' ? (
+          <div className="events-table">
+            <div className="events-table-head">
+              <span className="caption">Event</span><span className="caption">Method</span><span className="caption">Pages</span><span className="caption">Fires</span>
+            </div>
+            {filteredEvents.length === 0 ? (
+              <p className="caption no-events-note">No events match this filter.</p>
+            ) : (
+              filteredEvents.map(e => {
+                const isOpen = expandedEventName === e.eventName;
+                const isNew = newEventNames.has(e.eventName);
+                return (
+                  <div className="events-table-row-wrap" key={e.eventName}>
+                    <button
+                      type="button"
+                      className="events-table-row"
+                      onClick={() => setExpandedEventName(isOpen ? null : e.eventName)}
+                    >
+                      <span className="events-table-name">
+                        {e.eventName}
+                        {isNew && <span className="badge success small">NEW</span>}
+                      </span>
+                      <span className="events-table-method">
+                        {e.methods[0] && <span className={`method-dot ${METHOD_COLOR_CLASS[e.methods[0]]}`} />}
+                        {e.methods.map(m => METHOD_LABELS[m]).join(', ')}
+                      </span>
+                      <span className="tabular events-table-pages">{e.pageCount}</span>
+                      <span className="tabular events-table-fires">{e.totalCount}</span>
+                    </button>
+                    {isOpen && (
+                      <div className="events-table-detail">
+                        <EventDetails rawPayload={e.samplePayload} />
+                        <div className="events-table-where">
+                          <div className="caption">Where it fired</div>
+                          <div className="action-badges">
+                            {e.pageUrls.slice(0, 6).map(url => (
+                              <span key={url} className="badge" title={url}>{shortenPath(url)}</span>
+                            ))}
+                            {e.pageUrls.length > 6 && (
+                              <span className="badge">+{e.pageUrls.length - 6} more</span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        ) : (
+          <div className="page-groups">
+            {pageGroups.map(({ page, totalOnPage, visibleEvents }, i) => (
+              <div className="page-group" key={page.url ?? i}>
+                <div className="page-group-header">
+                  <span className="label" style={{ color: totalOnPage === 0 ? 'var(--semantic-negative)' : 'var(--fg-1)' }}>
+                    {page.url}
+                  </span>
+                  <span className="caption">
+                    {totalOnPage === 0 ? 'no events' : `${visibleEvents.length} of ${totalOnPage} shown`}
+                  </span>
                 </div>
-              );
-            })
-          )}
-        </div>
+                {totalOnPage === 0 && (
+                  <p className="caption page-group-empty">No Amplitude events captured on this page.</p>
+                )}
+                {visibleEvents.map((ev, j) => {
+                  const key = `${page.url ?? i}-${ev.eventName ?? j}-${j}`;
+                  const isOpen = expandedEventName === key;
+                  const method = ev.trackingMethod ?? 'CUSTOM_SDK';
+                  return (
+                    <div className="events-table-row-wrap" key={key}>
+                      <button
+                        type="button"
+                        className="events-table-row page-group-row"
+                        onClick={() => setExpandedEventName(isOpen ? null : key)}
+                      >
+                        <span className="events-table-name">{ev.eventName ?? '(unnamed event)'}</span>
+                        <span className="events-table-method">
+                          <span className={`method-dot ${METHOD_COLOR_CLASS[method]}`} />
+                          {METHOD_LABELS[method]}
+                        </span>
+                        <span className="tabular events-table-fires">{ev.count ?? 1}</span>
+                      </button>
+                      {isOpen && (
+                        <div className="events-table-detail">
+                          <EventDetails rawPayload={ev.rawPayload} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+      </section>
     </div>
   );
 }

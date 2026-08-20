@@ -268,7 +268,7 @@ public class AutoDiscoveryService {
         result.setEffectiveMaxPages(effectiveMaxPages);
         result.setExhaustive(request.isExhaustive());
         result.setManualLogin(request.isManualLogin());
-        List<UseCaseFinding> scorecard = computeScorecard(allEvents);
+        List<UseCaseFinding> scorecard = computeScorecard(allEvents, pagesVisited);
         result.setScorecard(scorecard);
         result.setScorecardVerdict(computeVerdict(scorecard, allEvents));
         return result;
@@ -292,11 +292,13 @@ public class AutoDiscoveryService {
     // the verdict carries a confidence note instead of overclaiming.
     private static final int THIN_SAMPLE_DISTINCT_EVENT_THRESHOLD = 5;
 
-    private List<UseCaseFinding> computeScorecard(List<CapturedEvent> events) {
+    private List<UseCaseFinding> computeScorecard(List<CapturedEvent> events, List<PageVisitResult> pagesVisited) {
         List<UseCaseFinding> findings = new ArrayList<>(List.of(
                 computeAutocaptureOnlyFinding(events),
                 computeNamingHygieneFinding(events),
-                computeLegacySdkFinding(events)));
+                computeLegacySdkFinding(events),
+                computeUntrackedAreasFinding(pagesVisited),
+                computePiiExposureFinding(events)));
         // Most severe FOUND first, then CLEAR items, so attention lands on what needs action.
         findings.sort(Comparator.comparingInt(
                 (UseCaseFinding f) -> f.isTriggered() ? severityRank(f.getSeverity()) : -1).reversed());
@@ -603,6 +605,189 @@ public class AutoDiscoveryService {
 
         return new UseCaseFinding("LEGACY_SDK", "Legacy SDK / capability lockout", triggered, severity, summary,
                 consequence, nextStep, evidence);
+    }
+
+    private UseCaseFinding computeUntrackedAreasFinding(List<PageVisitResult> pagesVisited) {
+        List<String> silentPages = new ArrayList<>();
+        int trackedPageCount = 0;
+        for (PageVisitResult page : pagesVisited) {
+            if (page.getCapturedEvents() == null || page.getCapturedEvents().isEmpty()) {
+                silentPages.add(page.getUrl() != null ? page.getUrl() : "(unknown page)");
+            } else {
+                trackedPageCount++;
+            }
+        }
+
+        int totalPages = pagesVisited.size();
+        // Only a real signal when the scan actually covered more than one page and the silence is a
+        // genuine split, not just "this was a one-page scan" or "every page fired something".
+        boolean triggered = totalPages >= 2 && !silentPages.isEmpty() && trackedPageCount > 0;
+        String severity = null;
+        String summary = triggered
+                ? "Some pages this scan visited fired no Amplitude events at all, while others did."
+                : "Every page this scan visited fired at least one Amplitude event.";
+        String consequence = triggered
+                ? "Key parts of your product are invisible in your own analytics - a flow that never fires an "
+                        + "event can't be measured, funnel-analyzed, or fed into Amplitude's AI."
+                : null;
+        String nextStep = triggered
+                ? "Confirm whether the silent pages are meant to be untracked (e.g. static/legal pages) or add "
+                        + "instrumentation to the ones that represent real product flows."
+                : null;
+
+        List<EvidenceLine> evidence = new ArrayList<>();
+        if (triggered) {
+            double silentRatio = silentPages.size() / (double) totalPages;
+            severity = silentRatio >= 0.5 ? "HIGH" : silentRatio >= 0.25 ? "MEDIUM" : "LOW";
+            evidence.add(new EvidenceLine(
+                    silentPages.size() + " of " + pluralize(totalPages, "page") + " visited captured zero events.",
+                    silentPages.stream().map(this::shortenForDisplay).collect(java.util.stream.Collectors.toList())));
+        } else {
+            evidence.add(new EvidenceLine(
+                    pluralize(trackedPageCount, "page") + " visited, all with at least one captured event.",
+                    List.of()));
+        }
+
+        return new UseCaseFinding("UNTRACKED_AREAS", "Untracked product areas", triggered, severity, summary,
+                consequence, nextStep, evidence);
+    }
+
+    private String shortenForDisplay(String url) {
+        try {
+            java.net.URL parsed = new java.net.URL(url);
+            String path = parsed.getPath();
+            return path == null || path.isBlank() ? "/" : path;
+        } catch (Exception e) {
+            return url;
+        }
+    }
+
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+            "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
+
+    // Normalized (letters-only, lowercase) substrings - matched against the same normalizeKey() form
+    // used for naming-hygiene concept matching, so "user_email"/"contactEmail" both hit "email".
+    private static final Set<String> PII_KEY_HINTS = Set.of(
+            "email", "firstname", "lastname", "phone", "ssn", "socialsecurity",
+            "password", "creditcard", "cardnumber", "streetaddress");
+
+    // Suffixes that mean the value is already safe to hold (hashed/masked/encrypted), even though the
+    // key name itself contains a PII hint.
+    private static final Set<String> PII_SAFE_KEY_MARKERS = Set.of("hash", "masked", "encrypted", "token");
+
+    private UseCaseFinding computePiiExposureFinding(List<CapturedEvent> events) {
+        // Keys are collected for display, values never are - the whole point of this finding is that
+        // this data shouldn't be here, so the report doesn't get to repeat it either.
+        Set<String> emailKeys = new TreeSet<>();
+        Set<String> hintedKeys = new TreeSet<>();
+
+        for (CapturedEvent event : events) {
+            String rawPayload = event.getRawPayload();
+            if (rawPayload == null || rawPayload.isBlank()) {
+                continue;
+            }
+            try {
+                JsonNode root = objectMapper.readTree(rawPayload);
+                scanForPii(root, emailKeys, hintedKeys);
+            } catch (Exception e) {
+                // malformed/unexpected payload shape - skip it for this analysis
+            }
+        }
+
+        boolean triggered = !emailKeys.isEmpty() || !hintedKeys.isEmpty();
+        String severity = triggered ? "HIGH" : null;
+        String summary = triggered
+                ? "This scan observed values that look like personally identifiable information in event data."
+                : "No email addresses or PII-named fields were observed in the captured event data.";
+        String consequence = triggered
+                ? "Sending PII into Amplitude is a compliance exposure - GDPR/CCPA obligations attach to this "
+                        + "data the moment it's captured, whether or not that was intentional."
+                : null;
+        String nextStep = triggered
+                ? "Strip or hash PII before it reaches Amplitude (e.g. hash emails, avoid raw input-field "
+                        + "autocapture), and audit historical data already ingested."
+                : null;
+
+        List<EvidenceLine> evidence = new ArrayList<>();
+        if (!emailKeys.isEmpty()) {
+            evidence.add(new EvidenceLine(
+                    pluralize(emailKeys.size(), "property") + " carried a value shaped like an email address "
+                            + "(values redacted here - check the field(s) directly).",
+                    new ArrayList<>(emailKeys)));
+        }
+        if (!hintedKeys.isEmpty()) {
+            evidence.add(new EvidenceLine(
+                    pluralize(hintedKeys.size(), "property") + " named after PII carried a non-empty value "
+                            + "(values redacted here - check the field(s) directly).",
+                    new ArrayList<>(hintedKeys)));
+        }
+        if (evidence.isEmpty()) {
+            evidence.add(new EvidenceLine(
+                    "No email-shaped values or PII-named fields (email, name, phone, address, SSN, password, "
+                            + "card number) were found.",
+                    List.of()));
+        }
+
+        return new UseCaseFinding("PII_EXPOSURE", "PII in the payload", triggered, severity, summary,
+                consequence, nextStep, evidence);
+    }
+
+    // Walks event_properties/user_properties (and any nested objects inside them) looking for values
+    // that are literally email-shaped, or sit under a key name that's unambiguously PII. Only scans
+    // property values - never event names or library metadata, which aren't user-entered data.
+    private void scanForPii(JsonNode node, Set<String> emailKeys, Set<String> hintedKeys) {
+        for (String field : new String[] {"event_properties", "user_properties"}) {
+            JsonNode props = node.get(field);
+            if (props != null && props.isObject()) {
+                scanPropertiesForPii(props, field, emailKeys, hintedKeys);
+            }
+        }
+    }
+
+    private void scanPropertiesForPii(JsonNode node, String path, Set<String> emailKeys, Set<String> hintedKeys) {
+        node.fields().forEachRemaining(entry -> {
+            String key = entry.getKey();
+            JsonNode value = entry.getValue();
+            String childPath = path + "." + key;
+            if (value.isObject()) {
+                scanPropertiesForPii(value, childPath, emailKeys, hintedKeys);
+                return;
+            }
+            if (!value.isTextual()) {
+                return;
+            }
+            String text = value.asText();
+            if (text.isBlank()) {
+                return;
+            }
+            if (EMAIL_PATTERN.matcher(text).find()) {
+                emailKeys.add(childPath);
+            } else if (looksLikePiiKey(key) && !isPlaceholderValue(text)) {
+                hintedKeys.add(childPath);
+            }
+        });
+    }
+
+    private boolean looksLikePiiKey(String key) {
+        String normalized = normalizeKey(key);
+        for (String marker : PII_SAFE_KEY_MARKERS) {
+            if (normalized.contains(marker)) {
+                return false;
+            }
+        }
+        for (String hint : PII_KEY_HINTS) {
+            if (normalized.contains(hint)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static final Set<String> PLACEHOLDER_VALUES = Set.of(
+            "empty", "unset", "null", "n/a", "na", "none", "unknown", "undefined", "true", "false");
+
+    private boolean isPlaceholderValue(String text) {
+        return PLACEHOLDER_VALUES.contains(text.trim().toLowerCase(java.util.Locale.ROOT));
     }
 
     private Set<String> collectCustomPropertyKeys(String rawPayload) {
